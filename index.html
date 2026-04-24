@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rental Revenue Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0d;--bg2:#0f0f14;--surface:#18181c;--surface2:#222228;--surface3:#2a2a32;--border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.13);--text:#f0efe8;--muted:#8a8a94;--dim:#55555f;--hayes:#4f9cf9;--cedar:#3ecf8e;--camino:#f97316;--sonoro:#f5c842;--accent:#a78bfa;--up:#3ecf8e;--down:#f87171}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:radial-gradient(ellipse at top left,#1a1a24 0%,var(--bg) 50%) fixed,var(--bg);color:var(--text);min-height:100vh;padding:2rem;animation:fadeIn .5s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1.75rem;flex-wrap:wrap;gap:1rem}
+.header-left h1{font-size:2rem;font-weight:600;letter-spacing:-0.04em;background:linear-gradient(135deg,#fff 0%,#a8a8b8 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header-left p{font-size:0.78rem;color:var(--muted);margin-top:4px;font-family:'DM Mono',monospace}
+.data-badge{background:linear-gradient(135deg,rgba(79,156,249,0.18),rgba(167,139,250,0.12));border:1px solid rgba(79,156,249,0.3);color:var(--hayes);font-size:0.72rem;font-family:'DM Mono',monospace;padding:6px 12px;border-radius:8px}
+.controls{display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap}
+select{background:var(--surface);border:1px solid var(--border2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.82rem;padding:7px 28px 7px 12px;border-radius:7px;cursor:pointer;outline:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238a8a94' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;transition:border-color .15s}
+select:hover{border-color:rgba(255,255,255,0.22)}
+
+/* Hero KPI Strip */
+.hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:1.5rem}
+.kpi{position:relative;background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);border:1px solid var(--border);border-radius:14px;padding:18px 20px;overflow:hidden;animation:slideUp .4s ease both;transition:transform .15s,border-color .15s}
+.kpi:hover{transform:translateY(-2px);border-color:var(--border2)}
+.kpi::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--hayes),var(--accent));opacity:0.6}
+.kpi-label{font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-family:'DM Mono',monospace;margin-bottom:8px}
+.kpi-value{font-size:1.85rem;font-weight:600;letter-spacing:-0.035em;line-height:1.1}
+.kpi-meta{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.yoy-badge{display:inline-flex;align-items:center;gap:3px;font-size:0.72rem;font-weight:500;padding:2px 8px;border-radius:99px;font-family:'DM Mono',monospace}
+.yoy-up{background:rgba(62,207,142,0.13);color:var(--up);border:1px solid rgba(62,207,142,0.25)}
+.yoy-down{background:rgba(248,113,113,0.12);color:var(--down);border:1px solid rgba(248,113,113,0.25)}
+.yoy-flat{background:var(--surface3);color:var(--muted);border:1px solid var(--border2)}
+.yoy-label{font-size:0.7rem;color:var(--dim);font-family:'DM Mono',monospace}
+.spark{margin-top:10px;display:block;width:100%;height:32px}
+
+/* Property Scorecards */
+.scorecards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:1.5rem}
+.scard{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;cursor:pointer;overflow:hidden;animation:slideUp .4s ease both;transition:transform .15s,border-color .15s,background .15s}
+.scard:hover{transform:translateY(-2px);background:var(--surface2)}
+.scard.active{border-color:var(--hayes);background:linear-gradient(135deg,rgba(79,156,249,0.08),var(--surface))}
+.scard-bar{position:absolute;left:0;top:0;bottom:0;width:3px}
+.scard-name{font-size:0.78rem;font-weight:600;letter-spacing:0.02em;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.scard-amt{font-size:1.25rem;font-weight:600;letter-spacing:-0.02em;margin-bottom:6px}
+.scard-meta{display:flex;gap:10px;font-size:0.7rem;color:var(--muted);font-family:'DM Mono',monospace}
+.scard-meta b{color:var(--text);font-weight:500}
+
+/* Heatmap */
+.heatmap-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:1rem;animation:slideUp .4s ease both}
+.heatmap{display:grid;grid-template-columns:80px repeat(12,1fr);gap:4px;margin-top:6px}
+.hm-cell{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-family:'DM Mono',monospace;color:rgba(255,255,255,0.7);transition:transform .12s,outline .12s;cursor:pointer;position:relative}
+.hm-cell:hover{transform:scale(1.12);outline:1px solid rgba(255,255,255,0.45);z-index:2}
+.hm-month{font-size:0.65rem;color:var(--muted);text-align:center;font-family:'DM Mono',monospace;padding:4px 0}
+.hm-row-label{display:flex;align-items:center;gap:6px;font-size:0.78rem;font-weight:500;padding-right:8px}
+.hm-row-dot{width:8px;height:8px;border-radius:2px}
+.hm-legend{display:flex;align-items:center;gap:6px;margin-top:14px;font-size:0.7rem;color:var(--muted);font-family:'DM Mono',monospace}
+.hm-grad{display:flex;height:8px;width:120px;border-radius:2px;overflow:hidden}
+.hm-grad span{flex:1}
+
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.metric-label{font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;font-family:'DM Mono',monospace}
+.metric-value{font-size:1.5rem;font-weight:600;letter-spacing:-0.03em}
+
+
+
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:1rem}
+.chart-title{font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:14px;font-family:'DM Mono',monospace}
+.chart-wrap{position:relative;width:100%;height:280px}
+.chart-wrap-h{position:relative;width:100%;height:200px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:0.78rem;color:var(--muted)}
+.legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+
+
+
+
+
+
+.occ-stats{display:flex;gap:16px;margin-bottom:14px;flex-wrap:wrap}
+.occ-stat{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:110px}
+.occ-stat-label{font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;font-family:'DM Mono',monospace;margin-bottom:4px}
+.occ-stat-value{font-size:1.1rem;font-weight:600;letter-spacing:-0.02em}
+.btn-split{background:var(--hayes);border:1px solid var(--hayes);color:#0f0f11;font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:600;padding:7px 14px;border-radius:7px;cursor:pointer;outline:none;transition:transform .1s ease,filter .15s ease}
+.btn-split:hover{filter:brightness(1.08)}
+.btn-split:active{transform:translateY(1px)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:100;padding:1rem}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.modal-head h2{font-size:1.15rem;font-weight:600;letter-spacing:-0.02em}
+.modal-close{background:transparent;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;padding:0 6px;line-height:1}
+.modal-close:hover{color:var(--text)}
+.modal-desc{font-size:0.78rem;color:var(--muted);margin-bottom:16px;line-height:1.5;font-family:'DM Mono',monospace}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;font-family:'DM Mono',monospace}
+.field input{width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;padding:9px 12px;border-radius:7px;outline:none}
+.field input:focus{border-color:var(--hayes)}
+.btn-calc{width:100%;background:var(--hayes);border:none;color:#0f0f11;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:600;padding:11px;border-radius:8px;cursor:pointer;margin-top:6px}
+.btn-calc:hover{filter:brightness(1.08)}
+.split-result{margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
+.split-summary{font-size:0.78rem;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:10px}
+.split-row{display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:6px}
+.split-row-label{display:flex;flex-direction:column;gap:2px}
+.split-row-month{font-size:0.92rem;font-weight:600}
+.split-row-days{font-size:0.7rem;color:var(--muted);font-family:'DM Mono',monospace}
+.split-row-amt{font-size:1rem;font-weight:600;letter-spacing:-0.02em}
+.split-err{color:#f87171;font-size:0.82rem;margin-top:8px}
+.res-table-wrap{overflow-x:auto;margin-top:4px}
+table.res-table{width:100%;border-collapse:collapse;font-size:0.85rem}
+.res-table thead th{background:var(--surface2);color:var(--muted);font-weight:500;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.07em;font-family:'DM Mono',monospace;padding:10px 12px;text-align:left;border-bottom:1px solid var(--border2);cursor:pointer;user-select:none;white-space:nowrap}
+.res-table thead th:hover{color:var(--text)}
+.res-table thead th.active{color:var(--hayes)}
+.res-table thead th .sort-arrow{display:inline-block;margin-left:6px;font-size:0.65rem;opacity:0.55}
+.res-table thead th.active .sort-arrow{opacity:1}
+.res-table tbody td{padding:10px 12px;border-bottom:1px solid var(--border)}
+.res-table tbody tr:hover{background:rgba(255,255,255,0.025)}
+.res-table .num{text-align:right;font-family:'DM Mono',monospace}
+.res-table .empty{text-align:center;color:var(--muted);padding:24px;font-style:italic}
+footer{margin-top:2.5rem;text-align:center;font-size:0.72rem;color:var(--dim);font-family:'DM Mono',monospace}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <h1>USOASIS</h1>
+    <p>Hayes · Cedar · Camino · Sonoro</p>
+  </div>
+  <div class="data-badge">✓ Google Sheets 데이터 (2024–2026)</div>
+</div>
+<div class="controls">
+  <select id="yearSel" onchange="update()">
+    <option value="all">전체 연도</option>
+    <option value="2026" selected>2026</option>
+    <option value="2025">2025</option>
+    <option value="2024">2024</option>
+  </select>
+  <select id="monthSel" onchange="update()">
+    <option value="all">전체 월 (1~12월)</option>
+    <option value="0">1월</option>
+    <option value="1">2월</option>
+    <option value="2">3월</option>
+    <option value="3">4월</option>
+    <option value="4">5월</option>
+    <option value="5">6월</option>
+    <option value="6">7월</option>
+    <option value="7">8월</option>
+    <option value="8">9월</option>
+    <option value="9">10월</option>
+    <option value="10">11월</option>
+    <option value="11">12월</option>
+  </select>
+  <select id="propSel" onchange="update()">
+    <option value="all">전체 매장</option>
+    <option value="Hayes">Hayes</option>
+    <option value="Cedar">Cedar</option>
+    <option value="Camino">Camino</option>
+    <option value="Sonoro">Sonoro</option>
+  </select>
+  <button class="btn-split" onclick="openSplit()">매출분할계산</button>
+</div>
+<div class="modal-overlay" id="splitModal" onclick="if(event.target===this)closeSplit()">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>매출분할계산</h2>
+      <button class="modal-close" onclick="closeSplit()">&times;</button>
+    </div>
+    <div class="modal-desc">두 달에 걸친 예약의 총 금액을 각 월의 숙박일 수 비율로 나눠줍니다. (예: 3/25 ~ 4/3, $1,000 → 3월 7일분 + 4월 2일분)</div>
+    <div class="field">
+      <label>입실 날짜 (월/일)</label>
+      <input type="text" id="splitIn" placeholder="예: 3/25" inputmode="numeric">
+    </div>
+    <div class="field">
+      <label>퇴실 날짜 (월/일)</label>
+      <input type="text" id="splitOut" placeholder="예: 4/3" inputmode="numeric">
+    </div>
+    <div class="field">
+      <label>총 금액 (USD)</label>
+      <input type="number" id="splitAmt" step="0.01" placeholder="예: 1250.50">
+    </div>
+    <button class="btn-calc" onclick="calcSplit()">계산하기</button>
+    <div id="splitResult"></div>
+  </div>
+</div>
+<div class="hero" id="hero"></div>
+<div class="scorecards" id="scorecards"></div>
+
+  <div class="chart-card">
+    <div class="chart-title" id="chart-title-monthly">월별 총 매출 (누적)</div>
+    <div class="legend" id="legend-monthly"></div>
+    <div class="chart-wrap"><canvas id="monthlyChart"></canvas></div>
+  </div>
+  <div class="heatmap-card" id="heatmap-card">
+    <div class="chart-title">월 × 매장 매출 히트맵</div>
+    <div class="heatmap" id="heatmap"></div>
+    <div class="hm-legend">
+      <span>적음</span>
+      <div class="hm-grad">
+        <span style="background:rgba(167,139,250,0.06)"></span>
+        <span style="background:rgba(167,139,250,0.22)"></span>
+        <span style="background:rgba(167,139,250,0.42)"></span>
+        <span style="background:rgba(167,139,250,0.62)"></span>
+        <span style="background:rgba(167,139,250,0.85)"></span>
+      </div>
+      <span>많음</span>
+    </div>
+  </div>
+  <div class="chart-card" id="occupancy-card" style="display:none">
+    <div class="chart-title" id="chart-title-occ">가동율 / 공실률</div>
+    <div class="occ-stats" id="occ-stats"></div>
+    <div class="chart-wrap" style="height:220px"><canvas id="occChart"></canvas></div>
+  </div>
+  <div class="chart-card" id="reservations-card" style="display:none">
+    <div class="chart-title" id="chart-title-res">예약 상세 내역</div>
+    <div class="res-table-wrap">
+      <table class="res-table" id="resTable">
+        <thead>
+          <tr>
+            <th data-key="arrivalIso">입실 <span class="sort-arrow"></span></th>
+            <th data-key="departIso">퇴실 <span class="sort-arrow"></span></th>
+            <th data-key="days" class="num">숙박일 <span class="sort-arrow"></span></th>
+            <th data-key="amount" class="num">금액 <span class="sort-arrow"></span></th>
+            <th data-key="perDay" class="num">일단가 <span class="sort-arrow"></span></th>
+            <th data-key="guest">이름 <span class="sort-arrow"></span></th>
+          </tr>
+        </thead>
+        <tbody id="resTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+<footer>Google Sheets 데이터 내장 · 마지막 갱신: 2026-04-25 · 렌탈 매출 대시보드</footer>
+<script>
+const DATA=[
+{property:'Hayes',year:2026,month:0,days:3,amount:510.22,arrival:'1/17',depart:'1/20',arrivalIso:'2026-01-17',departIso:'2026-01-20',guest:'Ana1'},
+{property:'Hayes',year:2026,month:1,days:3,amount:678.03,arrival:'2/13',depart:'2/16',arrivalIso:'2026-02-13',departIso:'2026-02-16',guest:'Darissa6'},
+{property:'Hayes',year:2026,month:1,days:7,amount:741.34,arrival:'2/18',depart:'2/25',arrivalIso:'2026-02-18',departIso:'2026-02-25',guest:'Nicholas2'},
+{property:'Hayes',year:2026,month:1,days:4,amount:571.51,arrival:'2/25',depart:'3/1',arrivalIso:'2026-02-25',departIso:'2026-03-01',guest:'Jared3'},
+{property:'Hayes',year:2026,month:2,days:14,amount:2000.27,arrival:'3/1',depart:'3/15',arrivalIso:'2026-03-01',departIso:'2026-03-15',guest:'Jared3'},
+{property:'Hayes',year:2026,month:2,days:5,amount:871.06,arrival:'3/15',depart:'3/20',arrivalIso:'2026-03-15',departIso:'2026-03-20',guest:'Jessica7'},
+{property:'Hayes',year:2026,month:2,days:7,amount:1010.16,arrival:'3/20',depart:'3/27',arrivalIso:'2026-03-20',departIso:'2026-03-27',guest:'Taya'},
+{property:'Hayes',year:2026,month:2,days:1,amount:266.75,arrival:'3/27',depart:'3/28',arrivalIso:'2026-03-27',departIso:'2026-03-28',guest:'Jose1'},
+{property:'Hayes',year:2026,month:2,days:4,amount:622.09,arrival:'3/28',depart:'4/1',arrivalIso:'2026-03-28',departIso:'2026-04-01',guest:'Marcus4'},
+{property:'Hayes',year:2026,month:3,days:2,amount:311.05,arrival:'4/1',depart:'4/3',arrivalIso:'2026-04-01',departIso:'2026-04-03',guest:'Marcus4'},
+{property:'Hayes',year:2026,month:3,days:4,amount:706.16,arrival:'4/3',depart:'4/7',arrivalIso:'2026-04-03',departIso:'2026-04-07',guest:'Rosa7'},
+{property:'Hayes',year:2026,month:3,days:4,amount:682.88,arrival:'4/7',depart:'4/11',arrivalIso:'2026-04-07',departIso:'2026-04-11',guest:'Megan7'},
+{property:'Hayes',year:2026,month:3,days:2,amount:398.67,arrival:'4/17',depart:'4/19',arrivalIso:'2026-04-17',departIso:'2026-04-19',guest:'Nevada6'},
+{property:'Hayes',year:2026,month:3,days:6,amount:946.47,arrival:'4/25',depart:'5/1',arrivalIso:'2026-04-25',departIso:'2026-05-01',guest:'Todd2'},
+{property:'Hayes',year:2026,month:4,days:1,amount:157.74,arrival:'5/1',depart:'5/2',arrivalIso:'2026-05-01',departIso:'2026-05-02',guest:'Todd2'},
+{property:'Hayes',year:2026,month:4,days:6,amount:986.49,arrival:'5/16',depart:'5/22',arrivalIso:'2026-05-16',departIso:'2026-05-22',guest:'Meichelle9'},
+{property:'Hayes',year:2026,month:5,days:3,amount:561.63,arrival:'6/11',depart:'6/14',arrivalIso:'2026-06-11',departIso:'2026-06-14',guest:'Rebecca8'},
+{property:'Cedar',year:2026,month:0,days:7,amount:1040.89,arrival:'1/5',depart:'1/12',arrivalIso:'2026-01-05',departIso:'2026-01-12',guest:'Taya4'},
+{property:'Cedar',year:2026,month:0,days:11,amount:1724.39,arrival:'1/13',depart:'1/24',arrivalIso:'2026-01-13',departIso:'2026-01-24',guest:'Mustafa'},
+{property:'Cedar',year:2026,month:1,days:29,amount:3277.93,arrival:'2/1',depart:'3/2',arrivalIso:'2026-02-01',departIso:'2026-03-02',guest:'Susan'},
+{property:'Cedar',year:2026,month:2,days:1,amount:117.07,arrival:'3/1',depart:'3/2',arrivalIso:'2026-03-01',departIso:'2026-03-02',guest:'Susan'},
+{property:'Cedar',year:2026,month:2,days:3,amount:527.68,arrival:'3/2',depart:'3/5',arrivalIso:'2026-03-02',departIso:'2026-03-05',guest:'Chelsie4'},
+{property:'Cedar',year:2026,month:2,days:3,amount:527.68,arrival:'3/6',depart:'3/9',arrivalIso:'2026-03-06',departIso:'2026-03-09',guest:'Ana4'},
+{property:'Cedar',year:2026,month:2,days:4,amount:658.63,arrival:'3/9',depart:'3/13',arrivalIso:'2026-03-09',departIso:'2026-03-13',guest:'Kyle4'},
+{property:'Cedar',year:2026,month:2,days:4,amount:660.57,arrival:'3/9',depart:'3/13',arrivalIso:'2026-03-09',departIso:'2026-03-13',guest:'Taya(cancel)'},
+{property:'Cedar',year:2026,month:2,days:2,amount:460.75,arrival:'3/13',depart:'3/15',arrivalIso:'2026-03-13',departIso:'2026-03-15',guest:'Nelson6'},
+{property:'Cedar',year:2026,month:2,days:5,amount:989.4,arrival:'3/16',depart:'3/21',arrivalIso:'2026-03-16',departIso:'2026-03-21',guest:'Alanna8'},
+{property:'Cedar',year:2026,month:2,days:10,amount:1446.18,arrival:'3/22',depart:'4/1',arrivalIso:'2026-03-22',departIso:'2026-04-01',guest:'Arvonda3'},
+{property:'Cedar',year:2026,month:3,days:1,amount:144.62,arrival:'4/1',depart:'4/2',arrivalIso:'2026-04-01',departIso:'2026-04-02',guest:'Arvonda3'},
+{property:'Cedar',year:2026,month:3,days:4,amount:727.5,arrival:'4/2',depart:'4/6',arrivalIso:'2026-04-02',departIso:'2026-04-06',guest:'Isarel8'},
+{property:'Cedar',year:2026,month:3,days:25,amount:3511.4,arrival:'4/6',depart:'5/1',arrivalIso:'2026-04-06',departIso:'2026-05-01',guest:'Taya3'},
+{property:'Cedar',year:2026,month:4,days:3,amount:558.72,arrival:'5/15',depart:'5/18',arrivalIso:'2026-05-15',departIso:'2026-05-18',guest:'Jennifer8'},
+{property:'Cedar',year:2026,month:9,days:2,amount:522.83,arrival:'10/16',depart:'10/18',arrivalIso:'2026-10-16',departIso:'2026-10-18',guest:'Esmeralda8'},
+{property:'Camino',year:2026,month:0,days:7,amount:1053.17,arrival:'1/7',depart:'1/14',arrivalIso:'2026-01-07',departIso:'2026-01-14',guest:'Robert5'},
+{property:'Camino',year:2026,month:0,days:2,amount:309.91,arrival:'1/16',depart:'1/18',arrivalIso:'2026-01-16',departIso:'2026-01-18',guest:'Mercy6'},
+{property:'Camino',year:2026,month:0,days:8,amount:1032.42,arrival:'1/22',depart:'1/30',arrivalIso:'2026-01-22',departIso:'2026-01-30',guest:'Michael3'},
+{property:'Camino',year:2026,month:0,days:2,amount:332.39,arrival:'1/30',depart:'2/1',arrivalIso:'2026-01-30',departIso:'2026-02-01',guest:'Seth3'},
+{property:'Camino',year:2026,month:1,days:1,amount:116.19,arrival:'2/1',depart:'2/2',arrivalIso:'2026-02-01',departIso:'2026-02-02',guest:'Seth3'},
+{property:'Camino',year:2026,month:1,days:6,amount:1002.98,arrival:'2/5',depart:'2/11',arrivalIso:'2026-02-05',departIso:'2026-02-11',guest:'John4'},
+{property:'Camino',year:2026,month:1,days:4,amount:760.48,arrival:'2/13',depart:'2/17',arrivalIso:'2026-02-13',departIso:'2026-02-17',guest:'Tylor'},
+{property:'Camino',year:2026,month:1,days:3,amount:498.58,arrival:'2/17',depart:'2/20',arrivalIso:'2026-02-17',departIso:'2026-02-20',guest:'Walter3'},
+{property:'Camino',year:2026,month:1,days:3,amount:450.0,arrival:'2/20',depart:'2/23',arrivalIso:'2026-02-20',departIso:'2026-02-23',guest:'Lasan3'},
+{property:'Camino',year:2026,month:1,days:6,amount:805.62,arrival:'2/23',depart:'3/1',arrivalIso:'2026-02-23',departIso:'2026-03-01',guest:'Devonte2'},
+{property:'Camino',year:2026,month:2,days:10,amount:1342.7,arrival:'3/1',depart:'3/11',arrivalIso:'2026-03-01',departIso:'2026-03-11',guest:'Devonte2'},
+{property:'Camino',year:2026,month:2,days:3,amount:533.5,arrival:'3/12',depart:'3/15',arrivalIso:'2026-03-12',departIso:'2026-03-15',guest:'Milap4'},
+{property:'Camino',year:2026,month:2,days:6,amount:1261.0,arrival:'3/15',depart:'3/21',arrivalIso:'2026-03-15',departIso:'2026-03-21',guest:'Shayne5'},
+{property:'Camino',year:2026,month:2,days:6,amount:928.29,arrival:'3/22',depart:'3/28',arrivalIso:'2026-03-22',departIso:'2026-03-28',guest:'Logan2'},
+{property:'Camino',year:2026,month:2,days:2,amount:404.49,arrival:'3/28',depart:'3/30',arrivalIso:'2026-03-28',departIso:'2026-03-30',guest:'Jose1'},
+{property:'Camino',year:2026,month:2,days:1,amount:164.66,arrival:'3/31',depart:'4/1',arrivalIso:'2026-03-31',departIso:'2026-04-01',guest:'David4'},
+{property:'Camino',year:2026,month:3,days:3,amount:493.97,arrival:'4/1',depart:'4/4',arrivalIso:'2026-04-01',departIso:'2026-04-04',guest:'David4'},
+{property:'Camino',year:2026,month:3,days:5,amount:808.01,arrival:'4/4',depart:'4/9',arrivalIso:'2026-04-04',departIso:'2026-04-09',guest:'Christine4'},
+{property:'Camino',year:2026,month:3,days:3,amount:539.32,arrival:'4/13',depart:'4/16',arrivalIso:'2026-04-13',departIso:'2026-04-16',guest:'Brian3'},
+{property:'Camino',year:2026,month:3,days:3,amount:539.32,arrival:'4/18',depart:'4/21',arrivalIso:'2026-04-18',departIso:'2026-04-21',guest:'Gloria1'},
+{property:'Camino',year:2026,month:3,days:3,amount:560.66,arrival:'4/23',depart:'4/26',arrivalIso:'2026-04-23',departIso:'2026-04-26',guest:'Sarah4'},
+{property:'Camino',year:2026,month:3,days:4,amount:531.53,arrival:'4/27',depart:'5/1',arrivalIso:'2026-04-27',departIso:'2026-05-01',guest:'Taya3'},
+{property:'Camino',year:2026,month:4,days:14,amount:1860.35,arrival:'5/1',depart:'5/15',arrivalIso:'2026-05-01',departIso:'2026-05-15',guest:'Taya3'},
+{property:'Camino',year:2026,month:4,days:4,amount:731.38,arrival:'5/19',depart:'5/23',arrivalIso:'2026-05-19',departIso:'2026-05-23',guest:'Catherine1'},
+{property:'Camino',year:2026,month:5,days:4,amount:674.15,arrival:'6/2',depart:'6/6',arrivalIso:'2026-06-02',departIso:'2026-06-06',guest:'David3'},
+{property:'Camino',year:2026,month:5,days:17,amount:2210.39,arrival:'6/14',depart:'7/1',arrivalIso:'2026-06-14',departIso:'2026-07-01',guest:'Kenze4'},
+{property:'Camino',year:2026,month:6,days:24,amount:3120.54,arrival:'7/1',depart:'7/25',arrivalIso:'2026-07-01',departIso:'2026-07-25',guest:'Kenze4'},
+{property:'Camino',year:2026,month:7,days:1,amount:130.76,arrival:'8/31',depart:'9/1',arrivalIso:'2026-08-31',departIso:'2026-09-01',guest:'Romie4'},
+{property:'Camino',year:2026,month:8,days:10,amount:1307.6,arrival:'9/1',depart:'9/11',arrivalIso:'2026-09-01',departIso:'2026-09-11',guest:'Romie4'},
+{property:'Sonoro',year:2026,month:0,days:3,amount:403.14,arrival:'1/1',depart:'1/4',arrivalIso:'2026-01-01',departIso:'2026-01-04',guest:'Sonia4'},
+{property:'Sonoro',year:2026,month:0,days:7,amount:940.67,arrival:'1/4',depart:'1/11',arrivalIso:'2026-01-04',departIso:'2026-01-11',guest:'Victor'},
+{property:'Sonoro',year:2026,month:0,days:5,amount:829.35,arrival:'1/12',depart:'1/17',arrivalIso:'2026-01-12',departIso:'2026-01-17',guest:'Tate8'},
+{property:'Sonoro',year:2026,month:0,days:2,amount:385.09,arrival:'1/17',depart:'1/19',arrivalIso:'2026-01-17',departIso:'2026-01-19',guest:'Keven1'},
+{property:'Sonoro',year:2026,month:0,days:12,amount:1450.08,arrival:'1/20',depart:'2/1',arrivalIso:'2026-01-20',departIso:'2026-02-01',guest:'Seth4'},
+{property:'Sonoro',year:2026,month:1,days:15,amount:1812.61,arrival:'2/1',depart:'2/16',arrivalIso:'2026-02-01',departIso:'2026-02-16',guest:'Seth4'},
+{property:'Sonoro',year:2026,month:1,days:13,amount:1622.81,arrival:'2/16',depart:'3/1',arrivalIso:'2026-02-16',departIso:'2026-03-01',guest:'Taya'},
+{property:'Sonoro',year:2026,month:2,days:12,amount:1497.99,arrival:'3/1',depart:'3/13',arrivalIso:'2026-03-01',departIso:'2026-03-13',guest:'Taya'},
+{property:'Sonoro',year:2026,month:2,days:3,amount:539.32,arrival:'3/13',depart:'3/16',arrivalIso:'2026-03-13',departIso:'2026-03-16',guest:'Kendra2'},
+{property:'Sonoro',year:2026,month:2,days:3,amount:539.32,arrival:'3/16',depart:'3/19',arrivalIso:'2026-03-16',departIso:'2026-03-19',guest:'Chelsie5'},
+{property:'Sonoro',year:2026,month:2,days:4,amount:668.33,arrival:'3/19',depart:'3/23',arrivalIso:'2026-03-19',departIso:'2026-03-23',guest:'Michelle6'},
+{property:'Sonoro',year:2026,month:2,days:3,amount:521.86,arrival:'3/23',depart:'3/26',arrivalIso:'2026-03-23',departIso:'2026-03-26',guest:'Andrew3'},
+{property:'Sonoro',year:2026,month:2,days:4,amount:646.99,arrival:'3/26',depart:'3/30',arrivalIso:'2026-03-26',departIso:'2026-03-30',guest:'Joel6'},
+{property:'Sonoro',year:2026,month:2,days:2,amount:325.44,arrival:'3/30',depart:'4/1',arrivalIso:'2026-03-30',departIso:'2026-04-01',guest:'Taya'},
+{property:'Sonoro',year:2026,month:3,days:2,amount:325.44,arrival:'4/1',depart:'4/3',arrivalIso:'2026-04-01',departIso:'2026-04-03',guest:'Taya'},
+{property:'Sonoro',year:2026,month:3,days:2,amount:392.85,arrival:'4/3',depart:'4/5',arrivalIso:'2026-04-03',departIso:'2026-04-05',guest:'Isabel3'},
+{property:'Sonoro',year:2026,month:3,days:25,amount:3395.0,arrival:'4/5',depart:'4/30',arrivalIso:'2026-04-05',departIso:'2026-04-30',guest:'Heather4'},
+{property:'Sonoro',year:2026,month:4,days:5,amount:888.52,arrival:'5/18',depart:'5/23',arrivalIso:'2026-05-18',departIso:'2026-05-23',guest:'Lanita6'},
+{property:'Hayes',year:2025,month:0,days:2,amount:404.49,arrival:'1/10',depart:'1/12',arrivalIso:'2025-01-10',departIso:'2025-01-12',guest:'Ali6'},
+{property:'Hayes',year:2025,month:0,days:3,amount:510.22,arrival:'1/13',depart:'1/16',arrivalIso:'2025-01-13',departIso:'2025-01-16',guest:'Joe5'},
+{property:'Hayes',year:2025,month:0,days:3,amount:624.68,arrival:'1/17',depart:'1/20',arrivalIso:'2025-01-17',departIso:'2025-01-20',guest:'Sarah8'},
+{property:'Hayes',year:2025,month:0,days:4,amount:635.35,arrival:'1/20',depart:'1/24',arrivalIso:'2025-01-20',departIso:'2025-01-24',guest:'Jibran4'},
+{property:'Hayes',year:2025,month:0,days:4,amount:815.44,arrival:'1/28',depart:'2/1',arrivalIso:'2025-01-28',departIso:'2025-02-01',guest:'Mark7'},
+{property:'Hayes',year:2025,month:1,days:2,amount:407.72,arrival:'2/1',depart:'2/3',arrivalIso:'2025-02-01',departIso:'2025-02-03',guest:'Mark7'},
+{property:'Hayes',year:2025,month:1,days:4,amount:724.59,arrival:'2/3',depart:'2/7',arrivalIso:'2025-02-03',departIso:'2025-02-07',guest:'Robert3'},
+{property:'Hayes',year:2025,month:1,days:2,amount:469.48,arrival:'2/7',depart:'2/9',arrivalIso:'2025-02-07',departIso:'2025-02-09',guest:'Christina5'},
+{property:'Hayes',year:2025,month:1,days:4,amount:654.75,arrival:'2/10',depart:'2/14',arrivalIso:'2025-02-10',departIso:'2025-02-14',guest:'Jaafe4'},
+{property:'Hayes',year:2025,month:1,days:3,amount:539.32,arrival:'2/14',depart:'2/17',arrivalIso:'2025-02-14',departIso:'2025-02-17',guest:'Evan4'},
+{property:'Hayes',year:2025,month:1,days:4,amount:907.92,arrival:'2/20',depart:'2/24',arrivalIso:'2025-02-20',departIso:'2025-02-24',guest:'Paul5'},
+{property:'Hayes',year:2025,month:1,days:5,amount:880.27,arrival:'2/24',depart:'3/1',arrivalIso:'2025-02-24',departIso:'2025-03-01',guest:'Norina5'},
+{property:'Hayes',year:2025,month:2,days:1,amount:176.05,arrival:'3/1',depart:'3/2',arrivalIso:'2025-03-01',departIso:'2025-03-02',guest:'Norina5'},
+{property:'Hayes',year:2025,month:2,days:7,amount:1076.27,arrival:'3/2',depart:'3/9',arrivalIso:'2025-03-02',departIso:'2025-03-09',guest:'Allo2'},
+{property:'Hayes',year:2025,month:2,days:1,amount:269.66,arrival:'3/12',depart:'3/13',arrivalIso:'2025-03-12',departIso:'2025-03-13',guest:'Jeremy2'},
+{property:'Hayes',year:2025,month:2,days:3,amount:893.37,arrival:'3/13',depart:'3/16',arrivalIso:'2025-03-13',departIso:'2025-03-16',guest:'Christina10'},
+{property:'Hayes',year:2025,month:2,days:6,amount:1072.82,arrival:'3/19',depart:'3/25',arrivalIso:'2025-03-19',departIso:'2025-03-25',guest:'Tamela5'},
+{property:'Hayes',year:2025,month:2,days:2,amount:416.13,arrival:'3/28',depart:'3/30',arrivalIso:'2025-03-28',departIso:'2025-03-30',guest:'Joyce4'},
+{property:'Hayes',year:2025,month:3,days:3,amount:611.1,arrival:'4/3',depart:'4/6',arrivalIso:'2025-04-03',departIso:'2025-04-06',guest:'Vicki4'},
+{property:'Hayes',year:2025,month:3,days:2,amount:433.59,arrival:'4/11',depart:'4/13',arrivalIso:'2025-04-11',departIso:'2025-04-13',guest:'Enrique10'},
+{property:'Hayes',year:2025,month:3,days:2,amount:450.08,arrival:'4/17',depart:'4/19',arrivalIso:'2025-04-17',departIso:'2025-04-19',guest:'Cynia10'},
+{property:'Hayes',year:2025,month:3,days:2,amount:404.49,arrival:'4/25',depart:'4/27',arrivalIso:'2025-04-25',departIso:'2025-04-27',guest:'Nancy4'},
+{property:'Hayes',year:2025,month:3,days:2,amount:274.7,arrival:'4/29',depart:'5/1',arrivalIso:'2025-04-29',departIso:'2025-05-01',guest:'Leonard4'},
+{property:'Hayes',year:2025,month:4,days:10,amount:1595.88,arrival:'5/1',depart:'5/11',arrivalIso:'2025-05-01',departIso:'2025-05-11',guest:'Leonard4'},
+{property:'Hayes',year:2025,month:4,days:3,amount:539.32,arrival:'5/12',depart:'5/15',arrivalIso:'2025-05-12',departIso:'2025-05-15',guest:'Daniel4'},
+{property:'Hayes',year:2025,month:4,days:2,amount:445.23,arrival:'5/21',depart:'5/23',arrivalIso:'2025-05-21',departIso:'2025-05-23',guest:'Patricia6'},
+{property:'Hayes',year:2025,month:4,days:3,amount:693.55,arrival:'5/23',depart:'5/26',arrivalIso:'2025-05-23',departIso:'2025-05-26',guest:'Benita8'},
+{property:'Hayes',year:2025,month:5,days:9,amount:1313.73,arrival:'6/5',depart:'6/14',arrivalIso:'2025-06-05',departIso:'2025-06-14',guest:'Brien4'},
+{property:'Hayes',year:2025,month:5,days:6,amount:1133.93,arrival:'6/15',depart:'6/21',arrivalIso:'2025-06-15',departIso:'2025-06-21',guest:'Judy10'},
+{property:'Hayes',year:2025,month:5,days:5,amount:770.18,arrival:'6/22',depart:'6/27',arrivalIso:'2025-06-22',departIso:'2025-06-27',guest:'Rommel6'},
+{property:'Hayes',year:2025,month:6,days:6,amount:943.81,arrival:'7/2',depart:'7/8',arrivalIso:'2025-07-02',departIso:'2025-07-08',guest:'Linda4'},
+{property:'Hayes',year:2025,month:6,days:7,amount:1199.97,arrival:'7/11',depart:'7/18',arrivalIso:'2025-07-11',departIso:'2025-07-18',guest:'Jami12'},
+{property:'Hayes',year:2025,month:6,days:4,amount:560.0,arrival:'7/16',depart:'7/20',arrivalIso:'2025-07-16',departIso:'2025-07-20',guest:'직거래'},
+{property:'Hayes',year:2025,month:6,days:7,amount:1521.59,arrival:'7/25',depart:'8/1',arrivalIso:'2025-07-25',departIso:'2025-08-01',guest:'EriKa10'},
+{property:'Hayes',year:2025,month:7,days:19,amount:4130.03,arrival:'8/1',depart:'8/20',arrivalIso:'2025-08-01',departIso:'2025-08-20',guest:'EriKa10'},
+{property:'Hayes',year:2025,month:8,days:4,amount:635.35,arrival:'9/22',depart:'9/26',arrivalIso:'2025-09-22',departIso:'2025-09-26',guest:'Tyson3'},
+{property:'Hayes',year:2025,month:8,days:3,amount:539.32,arrival:'9/26',depart:'9/29',arrivalIso:'2025-09-26',departIso:'2025-09-29',guest:'Jennifer6'},
+{property:'Hayes',year:2025,month:8,days:2,amount:282.51,arrival:'9/29',depart:'10/1',arrivalIso:'2025-09-29',departIso:'2025-10-01',guest:'Micheal4'},
+{property:'Hayes',year:2025,month:9,days:18,amount:2542.56,arrival:'10/1',depart:'10/19',arrivalIso:'2025-10-01',departIso:'2025-10-19',guest:'Micheal4'},
+{property:'Hayes',year:2025,month:9,days:4,amount:674.15,arrival:'10/20',depart:'10/24',arrivalIso:'2025-10-20',departIso:'2025-10-24',guest:'Micheal6'},
+{property:'Hayes',year:2025,month:9,days:2,amount:376.36,arrival:'10/30',depart:'11/1',arrivalIso:'2025-10-30',departIso:'2025-11-01',guest:'Jacob6'},
+{property:'Hayes',year:2025,month:10,days:1,amount:188.18,arrival:'11/1',depart:'11/2',arrivalIso:'2025-11-01',departIso:'2025-11-02',guest:'Jacob6'},
+{property:'Hayes',year:2025,month:10,days:5,amount:800.0,arrival:'11/12',depart:'11/17',arrivalIso:'2025-11-12',departIso:'2025-11-17',guest:'사모님'},
+{property:'Hayes',year:2025,month:10,days:3,amount:484.03,arrival:'11/17',depart:'11/20',arrivalIso:'2025-11-17',departIso:'2025-11-20',guest:'Maria4'},
+{property:'Hayes',year:2025,month:10,days:6,amount:966.03,arrival:'11/23',depart:'11/29',arrivalIso:'2025-11-23',departIso:'2025-11-29',guest:'Albert3'},
+{property:'Hayes',year:2025,month:11,days:6,amount:905.01,arrival:'12/1',depart:'12/7',arrivalIso:'2025-12-01',departIso:'2025-12-07',guest:'Taya3'},
+{property:'Hayes',year:2025,month:11,days:2,amount:414.19,arrival:'12/12',depart:'12/14',arrivalIso:'2025-12-12',departIso:'2025-12-14',guest:'Karina7'},
+{property:'Hayes',year:2025,month:11,days:2,amount:460.75,arrival:'12/20',depart:'12/22',arrivalIso:'2025-12-20',departIso:'2025-12-22',guest:'Catherine9'},
+{property:'Hayes',year:2025,month:11,days:6,amount:975.82,arrival:'12/23',depart:'12/29',arrivalIso:'2025-12-23',departIso:'2025-12-29',guest:'Kim2'},
+{property:'Cedar',year:2025,month:0,days:1,amount:262.79,arrival:'1/1',depart:'1/2',arrivalIso:'2025-01-01',departIso:'2025-01-02',guest:'Maria8'},
+{property:'Cedar',year:2025,month:0,days:26,amount:4039.36,arrival:'1/6',depart:'2/1',arrivalIso:'2025-01-06',departIso:'2025-02-01',guest:'Taya2'},
+{property:'Cedar',year:2025,month:1,days:13,amount:2019.68,arrival:'2/1',depart:'2/14',arrivalIso:'2025-02-01',departIso:'2025-02-14',guest:'Taya2'},
+{property:'Cedar',year:2025,month:1,days:1,amount:260.93,arrival:'2/15',depart:'2/16',arrivalIso:'2025-02-15',departIso:'2025-02-16',guest:'Chieko4'},
+{property:'Cedar',year:2025,month:1,days:2,amount:376.36,arrival:'2/19',depart:'2/21',arrivalIso:'2025-02-19',departIso:'2025-02-21',guest:'Desiree4'},
+{property:'Cedar',year:2025,month:1,days:3,amount:764.36,arrival:'2/21',depart:'2/24',arrivalIso:'2025-02-21',departIso:'2025-02-24',guest:'Kurt5'},
+{property:'Cedar',year:2025,month:1,days:5,amount:772.2,arrival:'2/24',depart:'3/1',arrivalIso:'2025-02-24',departIso:'2025-03-01',guest:'Henry1'},
+{property:'Cedar',year:2025,month:2,days:6,amount:926.7,arrival:'3/1',depart:'3/7',arrivalIso:'2025-03-01',departIso:'2025-03-07',guest:'Henry1'},
+{property:'Cedar',year:2025,month:2,days:2,amount:398.67,arrival:'3/10',depart:'3/12',arrivalIso:'2025-03-10',departIso:'2025-03-12',guest:'Jeremy2'},
+{property:'Cedar',year:2025,month:2,days:4,amount:831.29,arrival:'3/12',depart:'3/16',arrivalIso:'2025-03-12',departIso:'2025-03-16',guest:'Dawna4'},
+{property:'Cedar',year:2025,month:2,days:3,amount:503.43,arrival:'3/17',depart:'3/20',arrivalIso:'2025-03-17',departIso:'2025-03-20',guest:'Benito2'},
+{property:'Cedar',year:2025,month:2,days:4,amount:884.64,arrival:'3/20',depart:'3/24',arrivalIso:'2025-03-20',departIso:'2025-03-24',guest:'Gerald4'},
+{property:'Cedar',year:2025,month:2,days:3,amount:530.59,arrival:'3/24',depart:'3/27',arrivalIso:'2025-03-24',departIso:'2025-03-27',guest:'Caleb4'},
+{property:'Cedar',year:2025,month:2,days:2,amount:309.95,arrival:'3/30',depart:'4/1',arrivalIso:'2025-03-30',departIso:'2025-04-01',guest:'Ryan1'},
+{property:'Cedar',year:2025,month:3,days:6,amount:929.87,arrival:'4/1',depart:'4/7',arrivalIso:'2025-04-01',departIso:'2025-04-07',guest:'Ryan1'},
+{property:'Cedar',year:2025,month:3,days:2,amount:396.73,arrival:'4/11',depart:'4/13',arrivalIso:'2025-04-11',departIso:'2025-04-13',guest:'Steve5'},
+{property:'Cedar',year:2025,month:3,days:11,amount:1549.9,arrival:'4/18',depart:'4/29',arrivalIso:'2025-04-18',departIso:'2025-04-29',guest:'Seleste5'},
+{property:'Cedar',year:2025,month:4,days:3,amount:530.59,arrival:'5/3',depart:'5/6',arrivalIso:'2025-05-03',departIso:'2025-05-06',guest:'Jessica5'},
+{property:'Cedar',year:2025,month:4,days:3,amount:530.59,arrival:'5/7',depart:'5/10',arrivalIso:'2025-05-07',departIso:'2025-05-10',guest:'Casey5'},
+{property:'Cedar',year:2025,month:4,days:4,amount:665.42,arrival:'5/11',depart:'5/15',arrivalIso:'2025-05-11',departIso:'2025-05-15',guest:'Juli3'},
+{property:'Cedar',year:2025,month:4,days:3,amount:619.83,arrival:'5/21',depart:'5/24',arrivalIso:'2025-05-21',departIso:'2025-05-24',guest:'Jillian8'},
+{property:'Cedar',year:2025,month:4,days:2,amount:467.54,arrival:'5/24',depart:'5/26',arrivalIso:'2025-05-24',departIso:'2025-05-26',guest:'Ashely7'},
+{property:'Cedar',year:2025,month:4,days:2,amount:395.76,arrival:'5/30',depart:'6/1',arrivalIso:'2025-05-30',departIso:'2025-06-01',guest:'Linsie5'},
+{property:'Cedar',year:2025,month:5,days:4,amount:665.42,arrival:'6/2',depart:'6/6',arrivalIso:'2025-06-02',departIso:'2025-06-06',guest:'Drake6'},
+{property:'Cedar',year:2025,month:5,days:5,amount:809.95,arrival:'6/6',depart:'6/11',arrivalIso:'2025-06-06',departIso:'2025-06-11',guest:'Rene1'},
+{property:'Cedar',year:2025,month:5,days:3,amount:530.59,arrival:'6/11',depart:'6/14',arrivalIso:'2025-06-11',departIso:'2025-06-14',guest:'Kyle6'},
+{property:'Cedar',year:2025,month:5,days:4,amount:626.62,arrival:'6/16',depart:'6/20',arrivalIso:'2025-06-16',departIso:'2025-06-20',guest:'Drake4'},
+{property:'Cedar',year:2025,month:5,days:8,amount:1114.88,arrival:'6/23',depart:'7/1',arrivalIso:'2025-06-23',departIso:'2025-07-01',guest:'Taya4'},
+{property:'Cedar',year:2025,month:6,days:17,amount:2369.13,arrival:'7/1',depart:'7/18',arrivalIso:'2025-07-01',departIso:'2025-07-18',guest:'Taya4'},
+{property:'Cedar',year:2025,month:6,days:2,amount:417.0,arrival:'7/18',depart:'7/20',arrivalIso:'2025-07-18',departIso:'2025-07-20',guest:'직거래'},
+{property:'Cedar',year:2025,month:6,days:3,amount:520.89,arrival:'7/25',depart:'7/28',arrivalIso:'2025-07-25',departIso:'2025-07-28',guest:'Alexis2'},
+{property:'Cedar',year:2025,month:6,days:4,amount:537.92,arrival:'7/28',depart:'8/1',arrivalIso:'2025-07-28',departIso:'2025-08-01',guest:'Taya4'},
+{property:'Cedar',year:2025,month:7,days:21,amount:2824.1,arrival:'8/1',depart:'8/22',arrivalIso:'2025-08-01',departIso:'2025-08-22',guest:'Taya4'},
+{property:'Cedar',year:2025,month:8,days:3,amount:530.59,arrival:'9/2',depart:'9/5',arrivalIso:'2025-09-02',departIso:'2025-09-05',guest:'Taya4'},
+{property:'Cedar',year:2025,month:8,days:23,amount:3093.0,arrival:'9/8',depart:'10/1',arrivalIso:'2025-09-08',departIso:'2025-10-01',guest:'Taya4'},
+{property:'Cedar',year:2025,month:9,days:2,amount:268.96,arrival:'10/1',depart:'10/3',arrivalIso:'2025-10-01',departIso:'2025-10-03',guest:'Taya4'},
+{property:'Cedar',year:2025,month:9,days:3,amount:536.41,arrival:'10/3',depart:'10/6',arrivalIso:'2025-10-03',departIso:'2025-10-06',guest:'Yvonne1'},
+{property:'Cedar',year:2025,month:9,days:25,amount:3685.34,arrival:'10/6',depart:'10/31',arrivalIso:'2025-10-06',departIso:'2025-10-31',guest:'Rebecca7'},
+{property:'Cedar',year:2025,month:10,days:5,amount:808.98,arrival:'11/2',depart:'11/7',arrivalIso:'2025-11-02',departIso:'2025-11-07',guest:'Rod4'},
+{property:'Cedar',year:2025,month:10,days:3,amount:539.32,arrival:'11/13',depart:'11/16',arrivalIso:'2025-11-13',departIso:'2025-11-16',guest:'Mark6'},
+{property:'Cedar',year:2025,month:10,days:4,amount:635.35,arrival:'11/17',depart:'11/21',arrivalIso:'2025-11-17',departIso:'2025-11-21',guest:'Fausto4'},
+{property:'Cedar',year:2025,month:10,days:3,amount:510.22,arrival:'11/23',depart:'11/26',arrivalIso:'2025-11-23',departIso:'2025-11-26',guest:'Taya4'},
+{property:'Cedar',year:2025,month:10,days:5,amount:1081.55,arrival:'11/26',depart:'12/1',arrivalIso:'2025-11-26',departIso:'2025-12-01',guest:'Mustafa'},
+{property:'Cedar',year:2025,month:11,days:4,amount:674.15,arrival:'12/1',depart:'12/5',arrivalIso:'2025-12-01',departIso:'2025-12-05',guest:'Taya4'},
+{property:'Cedar',year:2025,month:11,days:5,amount:808.98,arrival:'12/7',depart:'12/12',arrivalIso:'2025-12-07',departIso:'2025-12-12',guest:'Taya4'},
+{property:'Cedar',year:2025,month:11,days:2,amount:404.49,arrival:'12/12',depart:'12/14',arrivalIso:'2025-12-12',departIso:'2025-12-14',guest:'Jannette5'},
+{property:'Cedar',year:2025,month:11,days:5,amount:808.98,arrival:'12/14',depart:'12/19',arrivalIso:'2025-12-14',departIso:'2025-12-19',guest:'Taya4'},
+{property:'Cedar',year:2025,month:11,days:2,amount:539.32,arrival:'12/28',depart:'12/30',arrivalIso:'2025-12-28',departIso:'2025-12-30',guest:'Edward8'},
+{property:'Camino',year:2025,month:0,days:5,amount:882.7,arrival:'1/1',depart:'1/6',arrivalIso:'2025-01-01',departIso:'2025-01-06',guest:'Jimmy7'},
+{property:'Camino',year:2025,month:0,days:12,amount:1830.55,arrival:'1/8',depart:'1/20',arrivalIso:'2025-01-08',departIso:'2025-01-20',guest:'Jen6'},
+{property:'Camino',year:2025,month:0,days:10,amount:1453.41,arrival:'1/21',depart:'1/31',arrivalIso:'2025-01-21',departIso:'2025-01-31',guest:'Eric2'},
+{property:'Camino',year:2025,month:0,days:1,amount:246.86,arrival:'1/31',depart:'2/1',arrivalIso:'2025-01-31',departIso:'2025-02-01',guest:'Irvin7'},
+{property:'Camino',year:2025,month:1,days:1,amount:246.87,arrival:'2/1',depart:'2/2',arrivalIso:'2025-02-01',departIso:'2025-02-02',guest:'Irvin7'},
+{property:'Camino',year:2025,month:1,days:4,amount:731.38,arrival:'2/2',depart:'2/6',arrivalIso:'2025-02-02',departIso:'2025-02-06',guest:'Eric2'},
+{property:'Camino',year:2025,month:1,days:2,amount:467.54,arrival:'2/6',depart:'2/8',arrivalIso:'2025-02-06',departIso:'2025-02-08',guest:'Atti7'},
+{property:'Camino',year:2025,month:1,days:2,amount:446.2,arrival:'2/9',depart:'2/11',arrivalIso:'2025-02-09',departIso:'2025-02-11',guest:'Scott1'},
+{property:'Camino',year:2025,month:1,days:3,amount:616.92,arrival:'2/13',depart:'2/16',arrivalIso:'2025-02-13',departIso:'2025-02-16',guest:'Marlee4'},
+{property:'Camino',year:2025,month:1,days:2,amount:385.09,arrival:'2/18',depart:'2/20',arrivalIso:'2025-02-18',departIso:'2025-02-20',guest:'Lydia4'},
+{property:'Camino',year:2025,month:1,days:2,amount:527.68,arrival:'2/21',depart:'2/23',arrivalIso:'2025-02-21',departIso:'2025-02-23',guest:'Marissa4'},
+{property:'Camino',year:2025,month:1,days:6,amount:953.51,arrival:'2/23',depart:'3/1',arrivalIso:'2025-02-23',departIso:'2025-03-01',guest:'Shannon4'},
+{property:'Camino',year:2025,month:2,days:7,amount:1176.84,arrival:'3/2',depart:'3/9',arrivalIso:'2025-03-02',departIso:'2025-03-09',guest:'Allo3'},
+{property:'Camino',year:2025,month:2,days:4,amount:1086.4,arrival:'3/11',depart:'3/15',arrivalIso:'2025-03-11',departIso:'2025-03-15',guest:'Moni7'},
+{property:'Camino',year:2025,month:2,days:2,amount:437.47,arrival:'3/15',depart:'3/17',arrivalIso:'2025-03-15',departIso:'2025-03-17',guest:'Tyler'},
+{property:'Camino',year:2025,month:2,days:3,amount:568.42,arrival:'3/17',depart:'3/20',arrivalIso:'2025-03-17',departIso:'2025-03-20',guest:'Caleb4'},
+{property:'Camino',year:2025,month:2,days:4,amount:937.02,arrival:'3/20',depart:'3/24',arrivalIso:'2025-03-20',departIso:'2025-03-24',guest:'Alisa4'},
+{property:'Camino',year:2025,month:2,days:3,amount:716.83,arrival:'3/24',depart:'3/27',arrivalIso:'2025-03-24',departIso:'2025-03-27',guest:'Tod2'},
+{property:'Camino',year:2025,month:3,days:4,amount:794.43,arrival:'4/2',depart:'4/6',arrivalIso:'2025-04-02',departIso:'2025-04-06',guest:'Jennifer6'},
+{property:'Camino',year:2025,month:3,days:5,amount:838.08,arrival:'4/10',depart:'4/15',arrivalIso:'2025-04-10',departIso:'2025-04-15',guest:'Natalie6'},
+{property:'Camino',year:2025,month:3,days:2,amount:472.39,arrival:'4/18',depart:'4/20',arrivalIso:'2025-04-18',departIso:'2025-04-20',guest:'Yvette6'},
+{property:'Camino',year:2025,month:3,days:2,amount:455.9,arrival:'4/24',depart:'4/26',arrivalIso:'2025-04-24',departIso:'2025-04-26',guest:'Ashley7'},
+{property:'Camino',year:2025,month:3,days:3,amount:476.4,arrival:'4/28',depart:'5/1',arrivalIso:'2025-04-28',departIso:'2025-05-01',guest:'Corey5'},
+{property:'Camino',year:2025,month:4,days:1,amount:158.8,arrival:'5/1',depart:'5/2',arrivalIso:'2025-05-01',departIso:'2025-05-02',guest:'Corey5'},
+{property:'Camino',year:2025,month:4,days:4,amount:716.83,arrival:'5/7',depart:'5/11',arrivalIso:'2025-05-07',departIso:'2025-05-11',guest:'Rachel6'},
+{property:'Camino',year:2025,month:4,days:5,amount:933.14,arrival:'5/14',depart:'5/19',arrivalIso:'2025-05-14',departIso:'2025-05-19',guest:'Vee8'},
+{property:'Camino',year:2025,month:4,days:2,amount:452.02,arrival:'5/21',depart:'5/23',arrivalIso:'2025-05-21',departIso:'2025-05-23',guest:'Naterria8'},
+{property:'Camino',year:2025,month:4,days:2,amount:506.34,arrival:'5/23',depart:'5/25',arrivalIso:'2025-05-23',departIso:'2025-05-25',guest:'Tara2'},
+{property:'Camino',year:2025,month:4,days:2,amount:356.48,arrival:'5/30',depart:'6/1',arrivalIso:'2025-05-30',departIso:'2025-06-01',guest:'Kenneth2'},
+{property:'Camino',year:2025,month:5,days:2,amount:356.48,arrival:'6/1',depart:'6/3',arrivalIso:'2025-06-01',departIso:'2025-06-03',guest:'Kenneth2'},
+{property:'Camino',year:2025,month:5,days:1,amount:200.0,arrival:'6/6',depart:'6/7',arrivalIso:'2025-06-06',departIso:'2025-06-07',guest:'사과나무교회'},
+{property:'Camino',year:2025,month:5,days:4,amount:712.95,arrival:'6/9',depart:'6/13',arrivalIso:'2025-06-09',departIso:'2025-06-13',guest:'Wright4'},
+{property:'Camino',year:2025,month:5,days:9,amount:1309.07,arrival:'6/14',depart:'6/23',arrivalIso:'2025-06-14',departIso:'2025-06-23',guest:'Joshua1'},
+{property:'Camino',year:2025,month:5,days:3,amount:568.42,arrival:'6/26',depart:'6/29',arrivalIso:'2025-06-26',departIso:'2025-06-29',guest:'AKshdeep5'},
+{property:'Camino',year:2025,month:6,days:3,amount:539.32,arrival:'7/3',depart:'7/6',arrivalIso:'2025-07-03',departIso:'2025-07-06',guest:'Federico4'},
+{property:'Camino',year:2025,month:6,days:2,amount:417.1,arrival:'7/10',depart:'7/12',arrivalIso:'2025-07-10',departIso:'2025-07-12',guest:'James4'},
+{property:'Camino',year:2025,month:6,days:4,amount:712.95,arrival:'7/12',depart:'7/16',arrivalIso:'2025-07-12',departIso:'2025-07-16',guest:'Ryan8'},
+{property:'Camino',year:2025,month:6,days:10,amount:1348.3,arrival:'7/16',depart:'7/26',arrivalIso:'2025-07-16',departIso:'2025-07-26',guest:'Norina6'},
+{property:'Camino',year:2025,month:7,days:2,amount:404.49,arrival:'8/1',depart:'8/3',arrivalIso:'2025-08-01',departIso:'2025-08-03',guest:'Sweek6'},
+{property:'Camino',year:2025,month:7,days:4,amount:674.15,arrival:'8/4',depart:'8/8',arrivalIso:'2025-08-04',departIso:'2025-08-08',guest:'Rod5'},
+{property:'Camino',year:2025,month:7,days:2,amount:404.49,arrival:'8/8',depart:'8/10',arrivalIso:'2025-08-08',departIso:'2025-08-10',guest:'Lexi6'},
+{property:'Camino',year:2025,month:7,days:7,amount:1106.07,arrival:'8/15',depart:'8/22',arrivalIso:'2025-08-15',departIso:'2025-08-22',guest:'Berret6'},
+{property:'Camino',year:2025,month:7,days:4,amount:674.15,arrival:'8/25',depart:'8/29',arrivalIso:'2025-08-25',departIso:'2025-08-29',guest:'Rod5'},
+{property:'Camino',year:2025,month:7,days:2,amount:323.6,arrival:'8/30',depart:'9/1',arrivalIso:'2025-08-30',departIso:'2025-09-01',guest:'David2'},
+{property:'Camino',year:2025,month:8,days:3,amount:485.38,arrival:'9/1',depart:'9/4',arrivalIso:'2025-09-01',departIso:'2025-09-04',guest:'David2'},
+{property:'Camino',year:2025,month:8,days:5,amount:808.98,arrival:'9/7',depart:'9/12',arrivalIso:'2025-09-07',departIso:'2025-09-12',guest:'Taya4'},
+{property:'Camino',year:2025,month:8,days:5,amount:808.98,arrival:'9/14',depart:'9/19',arrivalIso:'2025-09-14',departIso:'2025-09-19',guest:'Taya4'},
+{property:'Camino',year:2025,month:8,days:4,amount:674.15,arrival:'9/20',depart:'9/24',arrivalIso:'2025-09-20',departIso:'2025-09-24',guest:'Deja6'},
+{property:'Camino',year:2025,month:8,days:4,amount:674.15,arrival:'9/24',depart:'9/28',arrivalIso:'2025-09-24',departIso:'2025-09-28',guest:'Jorge'},
+{property:'Camino',year:2025,month:9,days:2,amount:404.49,arrival:'10/1',depart:'10/3',arrivalIso:'2025-10-01',departIso:'2025-10-03',guest:'Sean1'},
+{property:'Camino',year:2025,month:9,days:3,amount:554.84,arrival:'10/8',depart:'10/11',arrivalIso:'2025-10-08',departIso:'2025-10-11',guest:'Cathy1'},
+{property:'Camino',year:2025,month:9,days:5,amount:711.98,arrival:'10/11',depart:'10/16',arrivalIso:'2025-10-11',departIso:'2025-10-16',guest:'Jose5'},
+{property:'Camino',year:2025,month:9,days:3,amount:607.22,arrival:'10/16',depart:'10/19',arrivalIso:'2025-10-16',departIso:'2025-10-19',guest:'Miguel5'},
+{property:'Camino',year:2025,month:9,days:12,amount:1541.16,arrival:'10/20',depart:'11/1',arrivalIso:'2025-10-20',departIso:'2025-11-01',guest:'Taya4'},
+{property:'Camino',year:2025,month:10,days:20,amount:2568.88,arrival:'11/1',depart:'11/21',arrivalIso:'2025-11-01',departIso:'2025-11-21',guest:'Taya4'},
+{property:'Camino',year:2025,month:10,days:1,amount:259.96,arrival:'11/22',depart:'11/23',arrivalIso:'2025-11-22',departIso:'2025-11-23',guest:'Amado5'},
+{property:'Camino',year:2025,month:10,days:3,amount:519.92,arrival:'11/23',depart:'11/26',arrivalIso:'2025-11-23',departIso:'2025-11-26',guest:'Taya4'},
+{property:'Camino',year:2025,month:10,days:3,amount:689.67,arrival:'11/26',depart:'11/29',arrivalIso:'2025-11-26',departIso:'2025-11-29',guest:'Rafael5'},
+{property:'Camino',year:2025,month:11,days:4,amount:674.15,arrival:'12/1',depart:'12/5',arrivalIso:'2025-12-01',departIso:'2025-12-05',guest:'Taya4'},
+{property:'Camino',year:2025,month:11,days:5,amount:808.98,arrival:'12/7',depart:'12/12',arrivalIso:'2025-12-07',departIso:'2025-12-12',guest:'Taya4'},
+{property:'Camino',year:2025,month:11,days:2,amount:377.33,arrival:'12/12',depart:'12/14',arrivalIso:'2025-12-12',departIso:'2025-12-14',guest:'Marita6'},
+{property:'Camino',year:2025,month:11,days:5,amount:808.98,arrival:'12/14',depart:'12/19',arrivalIso:'2025-12-14',departIso:'2025-12-19',guest:'Taya4'},
+{property:'Camino',year:2025,month:11,days:2,amount:423.89,arrival:'12/19',depart:'12/21',arrivalIso:'2025-12-19',departIso:'2025-12-21',guest:'Chris8'},
+{property:'Camino',year:2025,month:11,days:4,amount:804.13,arrival:'12/22',depart:'12/26',arrivalIso:'2025-12-22',departIso:'2025-12-26',guest:'Jason8'},
+{property:'Sonoro',year:2025,month:9,days:5,amount:625.65,arrival:'10/26',depart:'10/31',arrivalIso:'2025-10-26',departIso:'2025-10-31',guest:'Yaya3'},
+{property:'Sonoro',year:2025,month:9,days:2,amount:200.0,arrival:'10/31',depart:'11/2',arrivalIso:'2025-10-31',departIso:'2025-11-02',guest:'목사님'},
+{property:'Sonoro',year:2025,month:10,days:5,amount:760.48,arrival:'11/2',depart:'11/7',arrivalIso:'2025-11-02',departIso:'2025-11-07',guest:'Taya4'},
+{property:'Sonoro',year:2025,month:10,days:5,amount:721.64,arrival:'11/9',depart:'11/14',arrivalIso:'2025-11-09',departIso:'2025-11-14',guest:'Taya4'},
+{property:'Sonoro',year:2025,month:10,days:2,amount:385.09,arrival:'11/14',depart:'11/16',arrivalIso:'2025-11-14',departIso:'2025-11-16',guest:'Alana4'},
+{property:'Sonoro',year:2025,month:10,days:5,amount:760.48,arrival:'11/16',depart:'11/21',arrivalIso:'2025-11-16',departIso:'2025-11-21',guest:'Taya4'},
+{property:'Sonoro',year:2025,month:10,days:7,amount:909.97,arrival:'11/24',depart:'12/1',arrivalIso:'2025-11-24',departIso:'2025-12-01',guest:'Efren7'},
+{property:'Sonoro',year:2025,month:11,days:19,amount:2469.9,arrival:'12/1',depart:'12/20',arrivalIso:'2025-12-01',departIso:'2025-12-20',guest:'Efren7'},
+{property:'Sonoro',year:2025,month:11,days:1,amount:269.66,arrival:'12/20',depart:'12/21',arrivalIso:'2025-12-20',departIso:'2025-12-21',guest:'Elizabeth8'},
+{property:'Sonoro',year:2025,month:11,days:7,amount:963.87,arrival:'12/21',depart:'12/28',arrivalIso:'2025-12-21',departIso:'2025-12-28',guest:'Fawn3'},
+{property:'Sonoro',year:2025,month:11,days:4,amount:537.53,arrival:'12/28',depart:'1/1',arrivalIso:'2025-12-28',departIso:'2026-01-01',guest:'Sonia4'},
+{property:'Hayes',year:2024,month:0,days:11,amount:1503.01,arrival:'1/1',depart:'1/12',arrivalIso:'2024-01-01',departIso:'2024-01-12',guest:'Larry'},
+{property:'Hayes',year:2024,month:0,days:1,amount:236.68,arrival:'1/13',depart:'1/14',arrivalIso:'2024-01-13',departIso:'2024-01-14',guest:'Natalie'},
+{property:'Hayes',year:2024,month:0,days:5,amount:668.33,arrival:'1/15',depart:'1/20',arrivalIso:'2024-01-15',departIso:'2024-01-20',guest:'Trisha'},
+{property:'Hayes',year:2024,month:0,days:2,amount:405.0,arrival:'1/20',depart:'1/22',arrivalIso:'2024-01-20',departIso:'2024-01-22',guest:'Jessica'},
+{property:'Hayes',year:2024,month:0,days:4,amount:644.08,arrival:'1/22',depart:'1/26',arrivalIso:'2024-01-22',departIso:'2024-01-26',guest:'ERIKA'},
+{property:'Hayes',year:2024,month:0,days:2,amount:396.73,arrival:'1/26',depart:'1/28',arrivalIso:'2024-01-26',departIso:'2024-01-28',guest:'SUSAN'},
+{property:'Hayes',year:2024,month:0,days:3,amount:451.05,arrival:'1/28',depart:'1/31',arrivalIso:'2024-01-28',departIso:'2024-01-31',guest:'Jeff'},
+{property:'Hayes',year:2024,month:1,days:3,amount:492.76,arrival:'2/1',depart:'2/4',arrivalIso:'2024-02-01',departIso:'2024-02-04',guest:'ALMA'},
+{property:'Hayes',year:2024,month:1,days:3,amount:666.39,arrival:'2/5',depart:'2/8',arrivalIso:'2024-02-05',departIso:'2024-02-08',guest:'JUDY'},
+{property:'Hayes',year:2024,month:1,days:13,amount:1955.97,arrival:'2/17',depart:'3/1',arrivalIso:'2024-02-17',departIso:'2024-03-01',guest:'Laurel'},
+{property:'Hayes',year:2024,month:2,days:16,amount:2406.7,arrival:'3/1',depart:'3/17',arrivalIso:'2024-03-01',departIso:'2024-03-17',guest:'Laurel'},
+{property:'Hayes',year:2024,month:2,days:2,amount:491.79,arrival:'3/17',depart:'3/19',arrivalIso:'2024-03-17',departIso:'2024-03-19',guest:'Peggy'},
+{property:'Hayes',year:2024,month:2,days:3,amount:498.58,arrival:'3/19',depart:'3/22',arrivalIso:'2024-03-19',departIso:'2024-03-22',guest:'Bianca'},
+{property:'Hayes',year:2024,month:2,days:2,amount:538.35,arrival:'3/22',depart:'3/24',arrivalIso:'2024-03-22',departIso:'2024-03-24',guest:'Todd'},
+{property:'Hayes',year:2024,month:2,days:4,amount:887.55,arrival:'3/28',depart:'4/1',arrivalIso:'2024-03-28',departIso:'2024-04-01',guest:'Soyoung'},
+{property:'Hayes',year:2024,month:3,days:2,amount:431.65,arrival:'4/5',depart:'4/7',arrivalIso:'2024-04-05',departIso:'2024-04-07',guest:'Guillermo'},
+{property:'Hayes',year:2024,month:3,days:10,amount:1461.13,arrival:'4/9',depart:'4/19',arrivalIso:'2024-04-09',departIso:'2024-04-19',guest:'Aj'},
+{property:'Hayes',year:2024,month:3,days:1,amount:255.11,arrival:'4/20',depart:'4/21',arrivalIso:'2024-04-20',departIso:'2024-04-21',guest:'Saeed'},
+{property:'Hayes',year:2024,month:3,days:5,amount:742.05,arrival:'4/21',depart:'4/26',arrivalIso:'2024-04-21',departIso:'2024-04-26',guest:'Chris'},
+{property:'Hayes',year:2024,month:3,days:3,amount:505.37,arrival:'4/27',depart:'4/30',arrivalIso:'2024-04-27',departIso:'2024-04-30',guest:'L Murray'},
+{property:'Hayes',year:2024,month:4,days:1,amount:241.53,arrival:'5/1',depart:'5/2',arrivalIso:'2024-05-01',departIso:'2024-05-02',guest:'Michael'},
+{property:'Hayes',year:2024,month:4,days:2,amount:397.7,arrival:'5/3',depart:'5/5',arrivalIso:'2024-05-03',departIso:'2024-05-05',guest:'Alyssa'},
+{property:'Hayes',year:2024,month:4,days:2,amount:366.66,arrival:'5/5',depart:'5/7',arrivalIso:'2024-05-05',departIso:'2024-05-07',guest:'Lauren'},
+{property:'Hayes',year:2024,month:4,days:25,amount:3039.49,arrival:'5/7',depart:'6/1',arrivalIso:'2024-05-07',departIso:'2024-06-01',guest:'Rosa'},
+{property:'Hayes',year:2024,month:5,days:30,amount:3647.39,arrival:'6/1',depart:'7/1',arrivalIso:'2024-06-01',departIso:'2024-07-01',guest:'Rosa'},
+{property:'Hayes',year:2024,month:6,days:31,amount:3768.96,arrival:'7/1',depart:'8/1',arrivalIso:'2024-07-01',departIso:'2024-08-01',guest:'Rosa'},
+{property:'Hayes',year:2024,month:7,days:14,amount:1702.11,arrival:'8/1',depart:'8/15',arrivalIso:'2024-08-01',departIso:'2024-08-15',guest:'Rosa'},
+{property:'Hayes',year:2024,month:7,days:1,amount:279.36,arrival:'8/15',depart:'8/16',arrivalIso:'2024-08-15',departIso:'2024-08-16',guest:'Rosa'},
+{property:'Hayes',year:2024,month:7,days:4,amount:719.95,arrival:'8/19',depart:'8/23',arrivalIso:'2024-08-19',departIso:'2024-08-23',guest:'Jordy'},
+{property:'Hayes',year:2024,month:7,days:2,amount:443.29,arrival:'8/23',depart:'8/25',arrivalIso:'2024-08-23',departIso:'2024-08-25',guest:'Diana'},
+{property:'Hayes',year:2024,month:7,days:4,amount:605.88,arrival:'8/28',depart:'9/1',arrivalIso:'2024-08-28',departIso:'2024-09-01',guest:'Allo'},
+{property:'Hayes',year:2024,month:8,days:19,amount:2877.55,arrival:'9/1',depart:'9/20',arrivalIso:'2024-09-01',departIso:'2024-09-20',guest:'Allo'},
+{property:'Hayes',year:2024,month:8,days:3,amount:510.22,arrival:'9/24',depart:'9/27',arrivalIso:'2024-09-24',departIso:'2024-09-27',guest:'Zusana'},
+{property:'Hayes',year:2024,month:8,days:2,amount:455.9,arrival:'9/27',depart:'9/29',arrivalIso:'2024-09-27',departIso:'2024-09-29',guest:'Jannifer'},
+{property:'Hayes',year:2024,month:8,days:4,amount:728.47,arrival:'9/30',depart:'10/4',arrivalIso:'2024-09-30',departIso:'2024-10-04',guest:'haili'},
+{property:'Hayes',year:2024,month:9,days:7,amount:1080.0,arrival:'10/4',depart:'10/11',arrivalIso:'2024-10-04',departIso:'2024-10-11',guest:'Jibran'},
+{property:'Hayes',year:2024,month:9,days:2,amount:457.84,arrival:'10/12',depart:'10/14',arrivalIso:'2024-10-12',departIso:'2024-10-14',guest:'Noah'},
+{property:'Hayes',year:2024,month:9,days:2,amount:498.58,arrival:'10/18',depart:'10/20',arrivalIso:'2024-10-18',departIso:'2024-10-20',guest:'Allen'},
+{property:'Hayes',year:2024,month:9,days:6,amount:873.97,arrival:'10/26',depart:'11/1',arrivalIso:'2024-10-26',departIso:'2024-11-01',guest:'Lionel'},
+{property:'Hayes',year:2024,month:10,days:2,amount:371.51,arrival:'11/1',depart:'11/3',arrivalIso:'2024-11-01',departIso:'2024-11-03',guest:'Jeff'},
+{property:'Hayes',year:2024,month:10,days:20,amount:2527.63,arrival:'11/7',depart:'11/27',arrivalIso:'2024-11-07',departIso:'2024-11-27',guest:'Allo'},
+{property:'Hayes',year:2024,month:10,days:3,amount:756.6,arrival:'11/27',depart:'11/30',arrivalIso:'2024-11-27',departIso:'2024-11-30',guest:'Erin'},
+{property:'Hayes',year:2024,month:11,days:2,amount:440.38,arrival:'12/6',depart:'12/8',arrivalIso:'2024-12-06',departIso:'2024-12-08',guest:'Steph'},
+{property:'Hayes',year:2024,month:11,days:2,amount:423.89,arrival:'12/14',depart:'12/16',arrivalIso:'2024-12-14',departIso:'2024-12-16',guest:'Marcela'},
+{property:'Hayes',year:2024,month:11,days:5,amount:958.36,arrival:'12/21',depart:'12/26',arrivalIso:'2024-12-21',departIso:'2024-12-26',guest:'Leigh5'},
+{property:'Hayes',year:2024,month:11,days:4,amount:764.36,arrival:'12/27',depart:'12/31',arrivalIso:'2024-12-27',departIso:'2024-12-31',guest:'Kristi6'},
+{property:'Camino',year:2024,month:2,days:1,amount:145.5,arrival:'3/16',depart:'3/17',arrivalIso:'2024-03-16',departIso:'2024-03-17',guest:'Peggy'},
+{property:'Camino',year:2024,month:2,days:4,amount:657.66,arrival:'3/18',depart:'3/22',arrivalIso:'2024-03-18',departIso:'2024-03-22',guest:'Josh'},
+{property:'Camino',year:2024,month:2,days:6,amount:838.08,arrival:'3/23',depart:'3/29',arrivalIso:'2024-03-23',departIso:'2024-03-29',guest:'Christopher'},
+{property:'Camino',year:2024,month:2,days:2,amount:353.08,arrival:'3/30',depart:'4/1',arrivalIso:'2024-03-30',departIso:'2024-04-01',guest:'Juan'},
+{property:'Camino',year:2024,month:3,days:3,amount:468.51,arrival:'4/2',depart:'4/5',arrivalIso:'2024-04-02',departIso:'2024-04-05',guest:'Juanita'},
+{property:'Camino',year:2024,month:3,days:3,amount:501.49,arrival:'4/5',depart:'4/8',arrivalIso:'2024-04-05',departIso:'2024-04-08',guest:'Kathleen'},
+{property:'Camino',year:2024,month:3,days:4,amount:657.66,arrival:'4/8',depart:'4/12',arrivalIso:'2024-04-08',departIso:'2024-04-12',guest:'Juan'},
+{property:'Camino',year:2024,month:3,days:5,amount:761.45,arrival:'4/14',depart:'4/19',arrivalIso:'2024-04-14',departIso:'2024-04-19',guest:'Joseph'},
+{property:'Camino',year:2024,month:3,days:2,amount:424.86,arrival:'4/19',depart:'4/21',arrivalIso:'2024-04-19',departIso:'2024-04-21',guest:'Martha'},
+{property:'Camino',year:2024,month:3,days:7,amount:1020.4,arrival:'4/21',depart:'4/28',arrivalIso:'2024-04-21',departIso:'2024-04-28',guest:'Danny'},
+{property:'Camino',year:2024,month:3,days:2,amount:386.06,arrival:'4/28',depart:'4/30',arrivalIso:'2024-04-28',departIso:'2024-04-30',guest:'Benita'},
+{property:'Camino',year:2024,month:4,days:2,amount:374.42,arrival:'5/3',depart:'5/5',arrivalIso:'2024-05-03',departIso:'2024-05-05',guest:'Tamee'},
+{property:'Camino',year:2024,month:4,days:4,amount:665.42,arrival:'5/6',depart:'5/10',arrivalIso:'2024-05-06',departIso:'2024-05-10',guest:'Jose'},
+{property:'Camino',year:2024,month:4,days:2,amount:414.19,arrival:'5/11',depart:'5/13',arrivalIso:'2024-05-11',departIso:'2024-05-13',guest:'Crystal'},
+{property:'Camino',year:2024,month:4,days:3,amount:504.4,arrival:'5/15',depart:'5/18',arrivalIso:'2024-05-15',departIso:'2024-05-18',guest:'Rene'},
+{property:'Camino',year:2024,month:4,days:1,amount:264.81,arrival:'5/18',depart:'5/19',arrivalIso:'2024-05-18',departIso:'2024-05-19',guest:'Anthony'},
+{property:'Camino',year:2024,month:4,days:2,amount:398.67,arrival:'5/20',depart:'5/22',arrivalIso:'2024-05-20',departIso:'2024-05-22',guest:'Julie'},
+{property:'Camino',year:2024,month:4,days:4,amount:866.21,arrival:'5/22',depart:'5/26',arrivalIso:'2024-05-22',departIso:'2024-05-26',guest:'Stephen'},
+{property:'Camino',year:2024,month:5,days:29,amount:3240.46,arrival:'6/2',depart:'7/1',arrivalIso:'2024-06-02',departIso:'2024-07-01',guest:'Nicole'},
+{property:'Camino',year:2024,month:6,days:31,amount:3463.94,arrival:'7/1',depart:'8/1',arrivalIso:'2024-07-01',departIso:'2024-08-01',guest:'Nicole'},
+{property:'Camino',year:2024,month:7,days:9,amount:1005.65,arrival:'8/1',depart:'8/10',arrivalIso:'2024-08-01',departIso:'2024-08-10',guest:'Nicole'},
+{property:'Camino',year:2024,month:7,days:3,amount:527.68,arrival:'8/12',depart:'8/15',arrivalIso:'2024-08-12',departIso:'2024-08-15',guest:'Larry'},
+{property:'Camino',year:2024,month:7,days:6,amount:1274.08,arrival:'8/15',depart:'8/21',arrivalIso:'2024-08-15',departIso:'2024-08-21',guest:'Gentry'},
+{property:'Camino',year:2024,month:7,days:2,amount:458.81,arrival:'8/30',depart:'9/1',arrivalIso:'2024-08-30',departIso:'2024-09-01',guest:'Shannon'},
+{property:'Camino',year:2024,month:8,days:30,amount:4456.79,arrival:'9/1',depart:'10/1',arrivalIso:'2024-09-01',departIso:'2024-10-01',guest:'Terri'},
+{property:'Camino',year:2024,month:9,days:5,amount:924.41,arrival:'10/3',depart:'10/8',arrivalIso:'2024-10-03',departIso:'2024-10-08',guest:'Julie'},
+{property:'Camino',year:2024,month:9,days:6,amount:996.19,arrival:'10/8',depart:'10/14',arrivalIso:'2024-10-08',departIso:'2024-10-14',guest:'Keith'},
+{property:'Camino',year:2024,month:9,days:4,amount:635.35,arrival:'10/14',depart:'10/18',arrivalIso:'2024-10-14',departIso:'2024-10-18',guest:'Dan'},
+{property:'Camino',year:2024,month:9,days:2,amount:487.91,arrival:'10/18',depart:'10/20',arrivalIso:'2024-10-18',departIso:'2024-10-20',guest:'Alex'},
+{property:'Camino',year:2024,month:9,days:7,amount:1162.87,arrival:'10/20',depart:'10/27',arrivalIso:'2024-10-20',departIso:'2024-10-27',guest:'Devin'},
+{property:'Camino',year:2024,month:9,days:5,amount:752.25,arrival:'10/27',depart:'11/1',arrivalIso:'2024-10-27',departIso:'2024-11-01',guest:'Taya'},
+{property:'Camino',year:2024,month:10,days:16,amount:2407.2,arrival:'11/1',depart:'11/17',arrivalIso:'2024-11-01',departIso:'2024-11-17',guest:'Taya'},
+{property:'Camino',year:2024,month:10,days:3,amount:510.22,arrival:'11/18',depart:'11/21',arrivalIso:'2024-11-18',departIso:'2024-11-21',guest:'Corey'},
+{property:'Camino',year:2024,month:10,days:3,amount:597.52,arrival:'11/21',depart:'11/24',arrivalIso:'2024-11-21',departIso:'2024-11-24',guest:'Lloyd'},
+{property:'Camino',year:2024,month:10,days:5,amount:1201.83,arrival:'11/25',depart:'11/30',arrivalIso:'2024-11-25',departIso:'2024-11-30',guest:'Robin'},
+{property:'Camino',year:2024,month:11,days:17,amount:2493.56,arrival:'12/3',depart:'12/20',arrivalIso:'2024-12-03',departIso:'2024-12-20',guest:'Taya3'},
+{property:'Camino',year:2024,month:11,days:2,amount:495.67,arrival:'12/20',depart:'12/22',arrivalIso:'2024-12-20',departIso:'2024-12-22',guest:'Kim8'},
+{property:'Camino',year:2024,month:11,days:4,amount:783.76,arrival:'12/23',depart:'12/27',arrivalIso:'2024-12-23',departIso:'2024-12-27',guest:'Jennifer3'},
+{property:'Camino',year:2024,month:11,days:2,amount:561.63,arrival:'12/29',depart:'12/31',arrivalIso:'2024-12-29',departIso:'2024-12-31',guest:'Eric7'},
+{property:'Cedar',year:2024,month:6,days:1,amount:130.0,arrival:'7/10',depart:'7/11',arrivalIso:'2024-07-10',departIso:'2024-07-11',guest:'Matt'},
+{property:'Cedar',year:2024,month:6,days:1,amount:265.78,arrival:'7/13',depart:'7/14',arrivalIso:'2024-07-13',departIso:'2024-07-14',guest:'Linda'},
+{property:'Cedar',year:2024,month:6,days:4,amount:714.89,arrival:'7/14',depart:'7/18',arrivalIso:'2024-07-14',departIso:'2024-07-18',guest:'John'},
+{property:'Cedar',year:2024,month:6,days:9,amount:1232.84,arrival:'7/19',depart:'7/28',arrivalIso:'2024-07-19',departIso:'2024-07-28',guest:'Jose'},
+{property:'Cedar',year:2024,month:6,days:4,amount:665.42,arrival:'7/29',depart:'8/2',arrivalIso:'2024-07-29',departIso:'2024-08-02',guest:'Zach'},
+{property:'Cedar',year:2024,month:7,days:3,amount:559.69,arrival:'8/2',depart:'8/5',arrivalIso:'2024-08-02',departIso:'2024-08-05',guest:'Yolanda'},
+{property:'Cedar',year:2024,month:7,days:4,amount:743.02,arrival:'8/5',depart:'8/9',arrivalIso:'2024-08-05',departIso:'2024-08-09',guest:'Jose'},
+{property:'Cedar',year:2024,month:7,days:14,amount:2177.36,arrival:'8/9',depart:'8/23',arrivalIso:'2024-08-09',departIso:'2024-08-23',guest:'Allo'},
+{property:'Cedar',year:2024,month:8,days:3,amount:566.48,arrival:'9/5',depart:'9/8',arrivalIso:'2024-09-05',departIso:'2024-09-08',guest:'Kim'},
+{property:'Cedar',year:2024,month:8,days:6,amount:1063.12,arrival:'9/11',depart:'9/17',arrivalIso:'2024-09-11',departIso:'2024-09-17',guest:'Mustafa'},
+{property:'Cedar',year:2024,month:8,days:2,amount:376.36,arrival:'9/17',depart:'9/19',arrivalIso:'2024-09-17',departIso:'2024-09-19',guest:'James'},
+{property:'Cedar',year:2024,month:8,days:3,amount:647.96,arrival:'9/20',depart:'9/23',arrivalIso:'2024-09-20',departIso:'2024-09-23',guest:'Alicia'},
+{property:'Cedar',year:2024,month:8,days:3,amount:501.49,arrival:'9/23',depart:'9/26',arrivalIso:'2024-09-23',departIso:'2024-09-26',guest:'Lysette'},
+{property:'Cedar',year:2024,month:8,days:3,amount:623.71,arrival:'9/27',depart:'9/30',arrivalIso:'2024-09-27',departIso:'2024-09-30',guest:'Jannifer'},
+{property:'Cedar',year:2024,month:8,days:4,amount:743.02,arrival:'9/30',depart:'10/4',arrivalIso:'2024-09-30',departIso:'2024-10-04',guest:'Maria'},
+{property:'Cedar',year:2024,month:9,days:11,amount:1805.98,arrival:'10/10',depart:'10/21',arrivalIso:'2024-10-10',departIso:'2024-10-21',guest:'Mustapa'},
+{property:'Cedar',year:2024,month:9,days:7,amount:906.46,arrival:'10/23',depart:'10/30',arrivalIso:'2024-10-23',departIso:'2024-10-30',guest:'Vicki'},
+{property:'Cedar',year:2024,month:9,days:1,amount:155.69,arrival:'10/31',depart:'11/1',arrivalIso:'2024-10-31',departIso:'2024-11-01',guest:'Dimitry'},
+{property:'Cedar',year:2024,month:10,days:3,amount:467.05,arrival:'11/1',depart:'11/4',arrivalIso:'2024-11-01',departIso:'2024-11-04',guest:'Dimitry'},
+{property:'Cedar',year:2024,month:10,days:2,amount:442.32,arrival:'11/8',depart:'11/10',arrivalIso:'2024-11-08',departIso:'2024-11-10',guest:'Nathan'},
+{property:'Cedar',year:2024,month:10,days:7,amount:1108.52,arrival:'11/11',depart:'11/18',arrivalIso:'2024-11-11',departIso:'2024-11-18',guest:'Chad'},
+{property:'Cedar',year:2024,month:10,days:3,amount:559.69,arrival:'11/18',depart:'11/21',arrivalIso:'2024-11-18',departIso:'2024-11-21',guest:'Billie'},
+{property:'Cedar',year:2024,month:10,days:2,amount:483.06,arrival:'11/22',depart:'11/24',arrivalIso:'2024-11-22',departIso:'2024-11-24',guest:'Debbie'},
+{property:'Cedar',year:2024,month:10,days:5,amount:1024.41,arrival:'11/24',depart:'11/29',arrivalIso:'2024-11-24',departIso:'2024-11-29',guest:'Mary'},
+{property:'Cedar',year:2024,month:10,days:2,amount:539.32,arrival:'11/29',depart:'12/1',arrivalIso:'2024-11-29',departIso:'2024-12-01',guest:'Lori'},
+{property:'Cedar',year:2024,month:11,days:17,amount:2425.23,arrival:'12/3',depart:'12/20',arrivalIso:'2024-12-03',departIso:'2024-12-20',guest:'Robert'},
+{property:'Cedar',year:2024,month:11,days:7,amount:1641.16,arrival:'12/20',depart:'12/27',arrivalIso:'2024-12-20',departIso:'2024-12-27',guest:'Jeanne3'},
+{property:'Cedar',year:2024,month:11,days:3,amount:786.75,arrival:'12/29',depart:'1/1',arrivalIso:'2024-12-29',departIso:'2025-01-01',guest:'Maria8'}
+];const COLORS={Hayes:'#4f9cf9',Cedar:'#3ecf8e',Camino:'#f97316',Sonoro:'#f5c842'};
+const PROPS=['Hayes','Cedar','Camino','Sonoro'];
+const MONTHS=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+let mChart,pChart;
+function fmt(n){return'$'+Math.round(n).toLocaleString()}
+function filter(){const y=document.getElementById('yearSel').value,m=document.getElementById('monthSel').value,p=document.getElementById('propSel').value;return DATA.filter(d=>(y==='all'||d.year==y)&&(m==='all'||d.month==m)&&(p==='all'||d.property===p))}
+
+// ===== Hero KPI strip with YoY + sparklines =====
+function aggregate(rows){var t=0,d=0;rows.forEach(function(r){t+=r.amount;d+=r.days;});return{total:t,days:d,count:rows.length,avg:d?t/d:0};}
+function yoyBadge(cur,prev){
+  if(prev<=0){return '<span class="yoy-badge yoy-flat">— —</span>';}
+  var pct=(cur-prev)/prev*100;
+  var rounded=Math.round(Math.abs(pct));
+  if(Math.abs(pct)<0.5){return '<span class="yoy-badge yoy-flat">≈ 0%</span>';}
+  if(pct>0){return '<span class="yoy-badge yoy-up">▲ '+rounded+'%</span>';}
+  return '<span class="yoy-badge yoy-down">▼ '+rounded+'%</span>';
+}
+function buildSparkline(values,color){
+  if(!values||values.length===0)return '';
+  var w=200,h=32,pad=2;
+  var max=Math.max.apply(null,values);
+  var min=Math.min.apply(null,values);
+  if(max===min){max=min+1;}
+  var step=values.length>1?(w-pad*2)/(values.length-1):0;
+  var pts=values.map(function(v,i){
+    var x=pad+i*step;
+    var y=h-pad-((v-min)/(max-min))*(h-pad*2);
+    return x.toFixed(1)+','+y.toFixed(1);
+  });
+  var line=pts.join(' ');
+  var area=pad+','+(h-pad)+' '+line+' '+(pad+(values.length-1)*step).toFixed(1)+','+(h-pad);
+  var lastX=(pad+(values.length-1)*step).toFixed(1);
+  var lastY=(h-pad-((values[values.length-1]-min)/(max-min))*(h-pad*2)).toFixed(1);
+  var id='sg'+Math.random().toString(36).slice(2,8);
+  return '<svg class="spark" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none">'
+    +'<defs><linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1">'
+      +'<stop offset="0%" stop-color="'+color+'" stop-opacity="0.35"/>'
+      +'<stop offset="100%" stop-color="'+color+'" stop-opacity="0"/>'
+    +'</linearGradient></defs>'
+    +'<polyline points="'+area+'" fill="url(#'+id+')" stroke="none"/>'
+    +'<polyline points="'+line+'" fill="none" stroke="'+color+'" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>'
+    +'<circle cx="'+lastX+'" cy="'+lastY+'" r="2.2" fill="'+color+'"/>'
+    +'</svg>';
+}
+function monthlySeries(year,prop){
+  return Array.from({length:12},function(_,m){
+    return DATA.filter(function(d){return d.year===year&&d.month===m&&(prop==='all'||d.property===prop);}).reduce(function(s,d){return s+d.amount;},0);
+  });
+}
+function renderHero(data){
+  var selYear=document.getElementById('yearSel').value;
+  var selMonth=document.getElementById('monthSel').value;
+  var selProp=document.getElementById('propSel').value;
+  var cur=aggregate(data);
+  // Prev-year comparison: same month/prop filters, year-1
+  var prevRows=[];
+  if(selYear!=='all'){
+    var prevYear=parseInt(selYear)-1;
+    prevRows=DATA.filter(function(d){
+      return d.year===prevYear
+        && (selMonth==='all'||d.month==selMonth)
+        && (selProp==='all'||d.property===selProp);
+    });
+  }
+  var prev=aggregate(prevRows);
+  var showYoY=(selYear!=='all');
+  // Sparkline: monthly totals across the selected year (or current year if "all")
+  var sparkYear=selYear==='all'?2026:parseInt(selYear);
+  var sparkSeries=monthlySeries(sparkYear,selProp);
+  var sparkColor=selProp==='all'?'var(--accent)':COLORS[selProp];
+  // Resolve color to hex for SVG (CSS vars in attributes can be flaky)
+  var sparkHex=selProp==='all'?'#a78bfa':COLORS[selProp];
+  var hero=document.getElementById('hero');
+  function card(label,value,curN,prevN,sparkVals,sparkCol,extraSub){
+    var sub=showYoY?yoyBadge(curN,prevN)+'<span class="yoy-label">vs '+(parseInt(selYear)-1)+'</span>':'<span class="yoy-label">'+(extraSub||'')+'</span>';
+    return '<div class="kpi">'
+      +'<div class="kpi-label">'+label+'</div>'
+      +'<div class="kpi-value">'+value+'</div>'
+      +'<div class="kpi-meta">'+sub+'</div>'
+      +(sparkVals?buildSparkline(sparkVals,sparkCol):'')
+      +'</div>';
+  }
+  // Per-property mini-series for the sparkline of "총 숙박일" and "일 평균 단가"
+  var daysSeries=Array.from({length:12},function(_,m){
+    return DATA.filter(function(d){return d.year===sparkYear&&d.month===m&&(selProp==='all'||d.property===selProp);}).reduce(function(s,d){return s+d.days;},0);
+  });
+  var avgSeries=Array.from({length:12},function(_,m){
+    var t=0,dd=0;
+    DATA.filter(function(d){return d.year===sparkYear&&d.month===m&&(selProp==='all'||d.property===selProp);}).forEach(function(r){t+=r.amount;dd+=r.days;});
+    return dd?t/dd:0;
+  });
+  var countSeries=Array.from({length:12},function(_,m){
+    return DATA.filter(function(d){return d.year===sparkYear&&d.month===m&&(selProp==='all'||d.property===selProp);}).length;
+  });
+  hero.innerHTML=
+    card('총 매출',fmt(cur.total),cur.total,prev.total,sparkSeries,sparkHex,sparkYear+'년 추이')
+    +card('예약 건수',cur.count,cur.count,prev.count,countSeries,sparkHex,sparkYear+'년 추이')
+    +card('총 숙박일',cur.days+'일',cur.days,prev.days,daysSeries,sparkHex,sparkYear+'년 추이')
+    +card('일 평균 단가',fmt(cur.avg),cur.avg,prev.avg,avgSeries,sparkHex,sparkYear+'년 추이');
+}
+
+// ===== Property scorecards =====
+function renderScorecards(){
+  var selYear=document.getElementById('yearSel').value;
+  var selMonth=document.getElementById('monthSel').value;
+  var selProp=document.getElementById('propSel').value;
+  var box=document.getElementById('scorecards');
+  // Per-property aggregates for current filters (ignoring selProp)
+  var cards=PROPS.map(function(p){
+    var rows=DATA.filter(function(d){
+      return d.property===p
+        && (selYear==='all'||d.year==selYear)
+        && (selMonth==='all'||d.month==selMonth);
+    });
+    var a=aggregate(rows);
+    // Occupancy: only meaningful when a year is fixed
+    var occLabel='';
+    if(selYear!=='all'){
+      var yr=parseInt(selYear);
+      var totalDays;
+      if(selMonth==='all'){
+        totalDays=Array.from({length:12},function(_,m){return getDays(m,yr);}).reduce(function(x,y){return x+y;},0);
+      } else {
+        totalDays=getDays(parseInt(selMonth),yr);
+      }
+      var used=Math.min(a.days,totalDays);
+      var rate=totalDays?Math.round(used/totalDays*100):0;
+      occLabel='<span><b>'+rate+'%</b> 가동</span>';
+    } else {
+      occLabel='<span><b>'+a.days+'</b>일</span>';
+    }
+    var active=(selProp===p)?' active':'';
+    return '<div class="scard'+active+'" data-prop="'+p+'" onclick="pickProp(\''+p+'\')">'
+      +'<div class="scard-bar" style="background:'+COLORS[p]+'"></div>'
+      +'<div class="scard-name"><span class="hm-row-dot" style="background:'+COLORS[p]+'"></span>'+p+'</div>'
+      +'<div class="scard-amt">'+fmt(a.total)+'</div>'
+      +'<div class="scard-meta"><span><b>'+a.count+'</b>건</span>'+occLabel+'</div>'
+      +'</div>';
+  }).join('');
+  box.innerHTML=cards;
+}
+function pickProp(p){
+  var sel=document.getElementById('propSel');
+  // Toggle: if already selected, switch back to all
+  if(sel.value===p){sel.value='all';} else {sel.value=p;}
+  update();
+}
+
+// ===== Heatmap (Month × Property) =====
+function renderHeatmap(){
+  var selYear=document.getElementById('yearSel').value;
+  var selMonth=document.getElementById('monthSel').value;
+  var hm=document.getElementById('heatmap');
+  // Build matrix [prop][month] of revenue for the selected year
+  var year=selYear==='all'?2026:parseInt(selYear);
+  var matrix={};
+  PROPS.forEach(function(p){
+    matrix[p]=Array.from({length:12},function(_,m){
+      return DATA.filter(function(d){return d.property===p&&d.year===year&&d.month===m;}).reduce(function(s,d){return s+d.amount;},0);
+    });
+  });
+  // Find max across the matrix for scaling
+  var maxV=0;
+  PROPS.forEach(function(p){matrix[p].forEach(function(v){if(v>maxV)maxV=v;});});
+  if(maxV===0)maxV=1;
+  // Build header row
+  var html='<div></div>';
+  for(var m=0;m<12;m++){html+='<div class="hm-month">'+(m+1)+'</div>';}
+  // Build property rows
+  PROPS.forEach(function(p){
+    html+='<div class="hm-row-label"><span class="hm-row-dot" style="background:'+COLORS[p]+'"></span>'+p+'</div>';
+    for(var m=0;m<12;m++){
+      var v=matrix[p][m];
+      var ratio=v/maxV;
+      var alpha=v===0?0.04:(0.10+ratio*0.78);
+      var hex=COLORS[p];
+      // Convert hex → rgba
+      var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+      var bg='rgba('+r+','+g+','+b+','+alpha.toFixed(2)+')';
+      var label=v>=1000?'$'+(v/1000).toFixed(1)+'k':(v>0?'$'+Math.round(v):'');
+      var sel=(selMonth!=='all'&&parseInt(selMonth)===m)?'outline:1px solid rgba(255,255,255,0.55);':'';
+      html+='<div class="hm-cell" style="background:'+bg+';'+sel+'" title="'+p+' · '+(m+1)+'월: '+fmt(v)+'" onclick="pickMonthProp('+m+',\''+p+'\')">'+label+'</div>';
+    }
+  });
+  hm.innerHTML=html;
+}
+function pickMonthProp(m,p){
+  document.getElementById('monthSel').value=String(m);
+  document.getElementById('propSel').value=p;
+  update();
+}
+function renderMonthly(data){
+  var selMonth=document.getElementById('monthSel').value;
+  var selYear=document.getElementById('yearSel').value;
+  if(mChart)mChart.destroy();
+  if(selMonth==='all'){
+    document.getElementById('chart-title-monthly').textContent='월별 총 매출 (누적)';
+    document.getElementById('legend-monthly').innerHTML=PROPS.map(function(p){return '<div class="legend-item"><span class="legend-dot" style="background:'+COLORS[p]+'"></span>'+p+'</div>';}).join('');
+    mChart=new Chart(document.getElementById('monthlyChart'),{type:'bar',data:{labels:MONTHS,datasets:PROPS.map(function(prop){return{label:prop,data:Array.from({length:12},function(_,mi){return data.filter(function(d){return d.property===prop&&d.month===mi;}).reduce(function(s,d){return s+d.amount;},0);}),backgroundColor:COLORS[prop]+'cc',borderColor:COLORS[prop],borderWidth:1,borderRadius:3,borderSkipped:false};})},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ' '+ctx.dataset.label+': '+fmt(ctx.raw);}}}},scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#8a8a94',font:{size:11}}},y:{stacked:true,grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8a8a94',font:{size:11},callback:function(v){return fmt(v);}}}}}});
+  } else {
+    var mi=parseInt(selMonth);
+    var monthName=MONTHS[mi];
+    var years=selYear==='all'?[2024,2025,2026]:[parseInt(selYear)];
+    var yearColors={2024:'#6366f1',2025:'#22d3ee',2026:'#f0efe8'};
+    document.getElementById('chart-title-monthly').textContent=monthName+' — 매장별 매출 비교';
+    document.getElementById('legend-monthly').innerHTML=years.map(function(yr){return '<div class="legend-item"><span class="legend-dot" style="background:'+yearColors[yr]+'"></span>'+yr+'년</div>';}).join('');
+    mChart=new Chart(document.getElementById('monthlyChart'),{type:'bar',data:{labels:PROPS,datasets:years.map(function(yr){return{label:yr+'년',data:PROPS.map(function(prop){return DATA.filter(function(d){return d.property===prop&&d.month===mi&&d.year===yr;}).reduce(function(s,d){return s+d.amount;},0);}),backgroundColor:yr===2024?'rgba(99,102,241,0.7)':yr===2025?'rgba(34,211,238,0.7)':'rgba(240,239,232,0.75)',borderColor:yearColors[yr],borderWidth:1,borderRadius:4,borderSkipped:false};})},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#8a8a94',font:{size:11},boxWidth:10,boxHeight:10}},tooltip:{callbacks:{label:function(ctx){return ' '+ctx.dataset.label+': '+fmt(ctx.raw);}}}},scales:{x:{grid:{display:false},ticks:{color:'#8a8a94',font:{size:13,weight:'500'}}},y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8a8a94',font:{size:11},callback:function(v){return fmt(v);}}}}}});
+  }
+}
+
+var occChart=null;
+var DAYS_IN_MONTH=[31,28,31,30,31,30,31,31,30,31,30,31];
+function getDays(m,yr){
+  if(m===1){return(yr%4===0&&(yr%100!==0||yr%400===0))?29:28;}
+  return DAYS_IN_MONTH[m];
+}
+function renderOccupancy(){
+  var selProp=document.getElementById('propSel').value;
+  var card=document.getElementById('occupancy-card');
+  if(selProp==='all'){
+    card.style.display='none';
+    if(occChart){occChart.destroy();occChart=null;}
+    return;
+  }
+  card.style.display='';
+  var prop=selProp;
+  var selMonth=document.getElementById('monthSel').value;
+  var mi=selMonth==='all'?null:parseInt(selMonth);
+  document.getElementById('chart-title-occ').textContent=prop+' \u2014 \uc6d4\ubcc4 \uac00\ub3d9\uc728 (\uc5f0\ub3c4\ubcc4 \ube44\uad50)';
+  var years=[2024,2025,2026];
+  var yearColors={2024:'#6366f1',2025:'#22d3ee',2026:'#f5c842'};
+
+  // 상단 스탯: 선택된 달 기준 (전체월이면 연간 합산)
+  var statsHTML='';
+  years.forEach(function(yr){
+    var totalDays, usedDays, label;
+    if(mi!==null){
+      totalDays=getDays(mi,yr);
+      usedDays=DATA.filter(function(d){return d.property===prop&&d.month===mi&&d.year===yr;}).reduce(function(s,d){return s+d.days;},0);
+      usedDays=Math.min(usedDays,totalDays);
+      label=yr+'\ub144 '+MONTHS[mi];
+    } else {
+      totalDays=Array.from({length:12},function(_,m){return getDays(m,yr);}).reduce(function(a,b){return a+b;},0);
+      usedDays=DATA.filter(function(d){return d.property===prop&&d.year===yr;}).reduce(function(s,d){return s+d.days;},0);
+      usedDays=Math.min(usedDays,totalDays);
+      label=yr+'\ub144 \uc5f0\uac04';
+    }
+    var rate=Math.round(usedDays/totalDays*100);
+    var vacant=totalDays-usedDays;
+    statsHTML+='<div class="occ-stat">'
+      +'<div class="occ-stat-label">'+label+'</div>'
+      +'<div class="occ-stat-value" style="color:'+yearColors[yr]+'">'+rate+'%</div>'
+      +'<div style="font-size:0.7rem;color:var(--muted);font-family:DM Mono,monospace;margin-top:2px">\uac00\ub3d9 '+usedDays+'\uc77c &middot; \uacf5\uc2e4 '+vacant+'\uc77c</div>'
+      +'</div>';
+  });
+  document.getElementById('occ-stats').innerHTML=statsHTML;
+
+  // 라인 차트: X=1~12월, Y=가동율(%), 연도별 선
+  var datasets=years.map(function(yr){
+    var rates=Array.from({length:12},function(_,m){
+      var total=getDays(m,yr);
+      var used=DATA.filter(function(d){return d.property===prop&&d.month===m&&d.year===yr;}).reduce(function(s,d){return s+d.days;},0);
+      used=Math.min(used,total);
+      return Math.round(used/total*100);
+    });
+    return{
+      label:yr+'\ub144',
+      data:rates,
+      borderColor:yearColors[yr],
+      backgroundColor:yearColors[yr]+'22',
+      borderWidth:2,
+      pointRadius:rates.map(function(_,i){return(mi!==null&&i===mi)?7:3;}),
+      pointBorderWidth:rates.map(function(_,i){return(mi!==null&&i===mi)?2:0;}),
+      pointBorderColor:rates.map(function(_,i){return(mi!==null&&i===mi)?'#fff':'transparent';}),
+      pointBackgroundColor:yearColors[yr],
+      tension:0.3,
+      fill:false
+    };
+  });
+
+  if(occChart){occChart.destroy();}
+  occChart=new Chart(document.getElementById('occChart'),{
+    type:'line',
+    data:{labels:MONTHS,datasets:datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:true,labels:{color:'#8a8a94',font:{size:11},boxWidth:20,boxHeight:2,usePointStyle:true,pointStyle:'line'}},
+        tooltip:{callbacks:{label:function(ctx){return ' '+ctx.dataset.label+': '+ctx.raw+'%';}}}
+      },
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#8a8a94',font:{size:11}}},
+        y:{min:0,max:100,grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8a8a94',font:{size:11},callback:function(v){return v+'%';},stepSize:20}}
+      }
+    }
+  });
+}
+
+
+// ===== 예약 상세 테이블 =====
+var resSortKey='arrivalIso';
+var resSortDir=1; // 1=asc, -1=desc
+function renderReservations(){
+  var selProp=document.getElementById('propSel').value;
+  var selYear=document.getElementById('yearSel').value;
+  var selMonth=document.getElementById('monthSel').value;
+  var card=document.getElementById('reservations-card');
+  // 전체 매장이면 숨김
+  if(selProp==='all'){
+    card.style.display='none';
+    return;
+  }
+  card.style.display='';
+  var rows=DATA.filter(function(d){
+    return d.property===selProp
+      && (selYear==='all'||d.year==selYear)
+      && (selMonth==='all'||d.month==selMonth);
+  });
+  // 일단가 계산 추가
+  rows=rows.map(function(r){var c=Object.assign({},r);c.perDay=r.days?r.amount/r.days:0;return c;});
+  // 정렬
+  rows.sort(function(a,b){
+    var va=a[resSortKey],vb=b[resSortKey];
+    if(typeof va==='string'&&typeof vb==='string'){
+      return va.localeCompare(vb)*resSortDir;
+    }
+    return((va||0)-(vb||0))*resSortDir;
+  });
+  // 타이틀
+  var title=selProp+' — 예약 상세 내역';
+  if(selYear!=='all')title+=' · '+selYear+'년';
+  if(selMonth!=='all')title+=' '+MONTHS[parseInt(selMonth)];
+  document.getElementById('chart-title-res').textContent=title;
+  // 헤더 화살표
+  var ths=document.querySelectorAll('#resTable thead th');
+  ths.forEach(function(th){
+    var k=th.getAttribute('data-key');
+    var arrow=th.querySelector('.sort-arrow');
+    if(k===resSortKey){
+      th.classList.add('active');
+      arrow.textContent=resSortDir===1?'▲':'▼';
+    }else{
+      th.classList.remove('active');
+      arrow.textContent='⇅';
+    }
+  });
+  // 바디
+  var body=document.getElementById('resTableBody');
+  if(rows.length===0){
+    body.innerHTML='<tr><td class="empty" colspan="6">선택한 조건에 해당하는 예약이 없습니다</td></tr>';
+    return;
+  }
+  body.innerHTML=rows.map(function(r){
+    var amt='$'+r.amount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    var pd='$'+r.perDay.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    return '<tr>'
+      +'<td>'+(r.arrival||'')+'</td>'
+      +'<td>'+(r.depart||'')+'</td>'
+      +'<td class="num">'+r.days+'</td>'
+      +'<td class="num">'+amt+'</td>'
+      +'<td class="num">'+pd+'</td>'
+      +'<td>'+(r.guest||'')+'</td>'
+      +'</tr>';
+  }).join('');
+}
+// 테이블 헤더 클릭 정렬 바인딩
+document.addEventListener('DOMContentLoaded',function(){
+  document.querySelectorAll('#resTable thead th').forEach(function(th){
+    th.addEventListener('click',function(){
+      var k=th.getAttribute('data-key');
+      if(resSortKey===k){resSortDir=-resSortDir;}
+      else {resSortKey=k;resSortDir=1;}
+      renderReservations();
+    });
+  });
+});
+// DOMContentLoaded가 이미 지났을 수 있으니 폴백
+if(document.readyState!=='loading'){
+  document.querySelectorAll('#resTable thead th').forEach(function(th){
+    th.addEventListener('click',function(){
+      var k=th.getAttribute('data-key');
+      if(resSortKey===k){resSortDir=-resSortDir;}
+      else {resSortKey=k;resSortDir=1;}
+      renderReservations();
+    });
+  });
+}
+
+function update(){var data=filter();renderHero(data);renderScorecards();renderMonthly(data);renderHeatmap();renderOccupancy();renderReservations();}
+update();
+
+// ===== 매출분할계산 =====
+function openSplit(){
+  document.getElementById('splitModal').classList.add('open');
+  document.getElementById('splitResult').innerHTML='';
+}
+function closeSplit(){
+  document.getElementById('splitModal').classList.remove('open');
+}
+function daysBetween(a,b){
+  // Full nights between dates (checkout - checkin)
+  return Math.round((b-a)/(1000*60*60*24));
+}
+// "M/D" 또는 "MM/DD" 형식 파싱 → {month:1~12, day:1~31}, 실패 시 null
+function parseMD(s){
+  if(!s)return null;
+  var m=String(s).trim().match(/^(\d{1,2})[\/\-\.\s](\d{1,2})$/);
+  if(!m)return null;
+  var mo=parseInt(m[1]),d=parseInt(m[2]);
+  if(mo<1||mo>12||d<1||d>31)return null;
+  return {month:mo,day:d};
+}
+function calcSplit(){
+  var inStr=document.getElementById('splitIn').value;
+  var outStr=document.getElementById('splitOut').value;
+  var amt=parseFloat(document.getElementById('splitAmt').value);
+  var res=document.getElementById('splitResult');
+  var pIn=parseMD(inStr),pOut=parseMD(outStr);
+  if(!pIn||!pOut||isNaN(amt)){
+    res.innerHTML='<div class="split-err">입실 날짜(월/일), 퇴실 날짜(월/일), 총 금액을 올바르게 입력해주세요. 예: 3/25</div>';
+    return;
+  }
+  if(amt<=0){
+    res.innerHTML='<div class="split-err">총 금액은 0보다 커야 합니다.</div>';
+    return;
+  }
+  // 연도는 계산 편의상 2025(비윤년)로 고정. 퇴실이 입실보다 월이 작으면 다음 해로 간주.
+  var baseYear=2025;
+  var din=new Date(baseYear,pIn.month-1,pIn.day);
+  var outYear=baseYear;
+  if(pOut.month<pIn.month||(pOut.month===pIn.month&&pOut.day<=pIn.day)){
+    outYear=baseYear+1;
+  }
+  var dout=new Date(outYear,pOut.month-1,pOut.day);
+  var totalDays=daysBetween(din,dout);
+  if(totalDays<=0){
+    res.innerHTML='<div class="split-err">퇴실 날짜는 입실 날짜보다 이후여야 합니다.</div>';
+    return;
+  }
+  // 월별로 숙박일 수 계산 (박 기준: checkin 포함 ~ checkout 제외)
+  var segs=[];
+  var cur=new Date(din);
+  while(cur<dout){
+    var y=cur.getFullYear();
+    var m=cur.getMonth();
+    var nextMonth=new Date(y,m+1,1);
+    var segEnd=nextMonth<dout?nextMonth:dout;
+    var segDays=daysBetween(cur,segEnd);
+    segs.push({month:m,start:new Date(cur),end:new Date(segEnd),days:segDays});
+    cur=segEnd;
+  }
+  // 금액 분배: 일당 단가 = amt/totalDays, 반올림 오차는 마지막 세그먼트에서 보정
+  var perDay=amt/totalDays;
+  var accum=0;
+  segs.forEach(function(s,i){
+    if(i===segs.length-1){
+      s.amount=Math.round((amt-accum)*100)/100;
+    } else {
+      s.amount=Math.round(perDay*s.days*100)/100;
+      accum+=s.amount;
+    }
+  });
+  var fmtDate=function(d){return(d.getMonth()+1)+'/'+d.getDate();};
+  var fmtMoney=function(n){return'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});};
+  var html='<div class="split-summary">총 '+totalDays+'박 · 총 '+fmtMoney(amt)+' · 일 평균 '+fmtMoney(perDay)+'</div>';
+  segs.forEach(function(s){
+    html+='<div class="split-row">'
+      +'<div class="split-row-label">'
+      +'<div class="split-row-month">'+MONTHS[s.month]+'</div>'
+      +'<div class="split-row-days">'+fmtDate(s.start)+' ~ '+fmtDate(s.end)+' · '+s.days+'박</div>'
+      +'</div>'
+      +'<div class="split-row-amt">'+fmtMoney(s.amount)+'</div>'
+      +'</div>';
+  });
+  res.innerHTML=html;
+}
+// ESC 키로 모달 닫기
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeSplit();});
+</script>
+</body>
+</html>
