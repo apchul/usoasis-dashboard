@@ -7,7 +7,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0a0a0d;--bg2:#0f0f14;--surface:#18181c;--surface2:#222228;--surface3:#2a2a32;--border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.13);--text:#f0efe8;--muted:#8a8a94;--dim:#55555f;--hayes:#4f9cf9;--cedar:#3ecf8e;--camino:#f97316;--sonoro:#f5c842;--accent:#a78bfa;--up:#3ecf8e;--down:#f87171}
+:root{--bg:#0a0a0d;--bg2:#0f0f14;--surface:#18181c;--surface2:#222228;--surface3:#2a2a32;--border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.13);--text:#f0efe8;--muted:#8a8a94;--dim:#55555f;--hayes:#4f9cf9;--cedar:#3ecf8e;--camino:#f97316;--sonoro:#f5c842;--sanjuan:#ec4899;--accent:#a78bfa;--up:#3ecf8e;--down:#f87171}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'DM Sans',sans-serif;background:radial-gradient(ellipse at top left,#1a1a24 0%,var(--bg) 50%) fixed,var(--bg);color:var(--text);min-height:100vh;padding:2rem;animation:fadeIn .5s ease}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
@@ -125,7 +125,7 @@ footer{margin-top:2.5rem;text-align:center;font-size:0.72rem;color:var(--dim);fo
 <div class="header">
   <div class="header-left">
     <h1>USOASIS</h1>
-    <p>Hayes · Cedar · Camino · Sonoro</p>
+    <p>Hayes · Cedar · Camino · Sonoro · San Juan</p>
   </div>
   <div class="data-badge">✓ Google Sheets 데이터 (2024–2026)</div>
 </div>
@@ -157,6 +157,7 @@ footer{margin-top:2.5rem;text-align:center;font-size:0.72rem;color:var(--dim);fo
     <option value="Cedar">Cedar</option>
     <option value="Camino">Camino</option>
     <option value="Sonoro">Sonoro</option>
+    <option value="San Juan">San Juan</option>
   </select>
   <button class="btn-split" onclick="openSplit()">매출분할계산</button>
 </div>
@@ -229,7 +230,7 @@ footer{margin-top:2.5rem;text-align:center;font-size:0.72rem;color:var(--dim);fo
       </table>
     </div>
   </div>
-<footer>Google Sheets 데이터 내장 · 마지막 갱신: 2026-04-29 · 렌탈 매출 대시보드</footer>
+<footer>Google Sheets 데이터 내장 · 마지막 갱신: 2026-04-30 · 렌탈 매출 대시보드</footer>
 <script>
 const DATA=[
 {property:'Hayes',year:2026,month:0,days:3,amount:510.22,arrival:'1/17',depart:'1/20',arrivalIso:'2026-01-17',departIso:'2026-01-20',guest:'Ana1'},
@@ -315,6 +316,7 @@ const DATA=[
 {property:'Sonoro',year:2026,month:3,days:25,amount:3395.0,arrival:'4/5',depart:'4/30',arrivalIso:'2026-04-05',departIso:'2026-04-30',guest:'Heather4'},
 {property:'Sonoro',year:2026,month:4,days:3,amount:521.86,arrival:'5/1',depart:'5/4',arrivalIso:'2026-05-01',departIso:'2026-05-04',guest:'Jose2'},
 {property:'Sonoro',year:2026,month:4,days:5,amount:888.52,arrival:'5/18',depart:'5/23',arrivalIso:'2026-05-18',departIso:'2026-05-23',guest:'Lanita6'},
+{property:'San Juan',year:2026,month:4,days:30,amount:3000.0,arrival:'5/1',depart:'5/31',arrivalIso:'2026-05-01',departIso:'2026-05-31',guest:'Heather4'},
 {property:'Hayes',year:2025,month:0,days:2,amount:404.49,arrival:'1/10',depart:'1/12',arrivalIso:'2025-01-10',departIso:'2025-01-12',guest:'Ali6'},
 {property:'Hayes',year:2025,month:0,days:3,amount:510.22,arrival:'1/13',depart:'1/16',arrivalIso:'2025-01-13',departIso:'2025-01-16',guest:'Joe5'},
 {property:'Hayes',year:2025,month:0,days:3,amount:624.68,arrival:'1/17',depart:'1/20',arrivalIso:'2025-01-17',departIso:'2025-01-20',guest:'Sarah8'},
@@ -600,8 +602,8 @@ const DATA=[
 {property:'Cedar',year:2024,month:11,days:17,amount:2425.23,arrival:'12/3',depart:'12/20',arrivalIso:'2024-12-03',departIso:'2024-12-20',guest:'Robert'},
 {property:'Cedar',year:2024,month:11,days:7,amount:1641.16,arrival:'12/20',depart:'12/27',arrivalIso:'2024-12-20',departIso:'2024-12-27',guest:'Jeanne3'},
 {property:'Cedar',year:2024,month:11,days:3,amount:786.75,arrival:'12/29',depart:'1/1',arrivalIso:'2024-12-29',departIso:'2025-01-01',guest:'Maria8'}
-];const COLORS={Hayes:'#4f9cf9',Cedar:'#3ecf8e',Camino:'#f97316',Sonoro:'#f5c842'};
-const PROPS=['Hayes','Cedar','Camino','Sonoro'];
+];const COLORS={Hayes:'#4f9cf9',Cedar:'#3ecf8e',Camino:'#f97316',Sonoro:'#f5c842','San Juan':'#ec4899'};
+const PROPS=['Hayes','Cedar','Camino','Sonoro','San Juan'];
 const MONTHS=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 let mChart,pChart;
 function fmt(n){return'$'+Math.round(n).toLocaleString()}
