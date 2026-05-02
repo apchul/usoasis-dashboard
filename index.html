@@ -8,21 +8,27 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root {
-  --bg: #0a0a0f;
-  --surface: #12121a;
-  --surface2: #1a1a26;
-  --border: rgba(255,255,255,0.07);
-  --text: #e8e8f0;
-  --text-dim: #666680;
-  --text-mid: #999ab8;
-  --accent: #7c6aff;
-  --accent2: #ff6a6a;
-  --hayes: #4f8ef7;
-  --cedar: #34d399;
-  --camino: #fb923c;
-  --sonoro: #fbbf24;
-  --sanjuan: #f472b6;
+  --bg: #f0f2f7;
+  --surface: #ffffff;
+  --surface2: #f5f6fa;
+  --border: rgba(0,0,0,0.08);
+  --text: #1a1a2e;
+  --text-dim: #8888a8;
+  --text-mid: #5555778;
+  --accent: #6355e8;
+  --accent2: #e85555;
+  --hayes: #3478e8;
+  --cedar: #18b87a;
+  --camino: #e8720a;
+  --sonoro: #d4a000;
+  --sanjuan: #d4449c;
   --radius: 12px;
+  /* Dark card overrides */
+  --dark-bg: #12121e;
+  --dark-surface: #1c1c2e;
+  --dark-border: rgba(255,255,255,0.08);
+  --dark-text: #e8e8f8;
+  --dark-text-dim: #6666aa;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; min-height: 100vh; }
@@ -30,19 +36,20 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 /* HEADER */
 .header {
   padding: 24px 32px 20px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(0,0,0,0.1);
   display: flex; align-items: center; gap: 16px;
-  background: linear-gradient(135deg, #0d0d18 0%, #0a0a0f 100%);
+  background: linear-gradient(135deg, #12121e 0%, #1c1c2e 100%);
 }
 .logo { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 4px; color: #fff; }
-.logo span { color: var(--accent); }
-.header-sub { font-size: 11px; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; }
-.header-right { margin-left: auto; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-dim); }
+.logo span { color: #8b7fff; }
+.header-sub { font-size: 11px; color: rgba(255,255,255,0.4); letter-spacing: 2px; text-transform: uppercase; }
+.header-right { margin-left: auto; font-family: 'DM Mono', monospace; font-size: 11px; color: rgba(255,255,255,0.35); }
 
 /* CONTROLS */
 .controls {
   display: flex; gap: 12px; padding: 16px 32px; align-items: center; flex-wrap: wrap;
   background: var(--surface); border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 .ctrl-group { display: flex; align-items: center; gap: 8px; }
 .ctrl-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
@@ -50,7 +57,7 @@ select {
   background: var(--surface2); border: 1px solid var(--border); color: var(--text);
   padding: 7px 28px 7px 12px; border-radius: 8px; font-family: inherit; font-size: 13px;
   appearance: none; cursor: pointer; outline: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666680'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238888a8'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 10px center;
   transition: border-color 0.2s;
 }
@@ -71,45 +78,59 @@ select:hover { border-color: var(--accent); }
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 20px; position: relative; overflow: hidden;
   transition: border-color 0.2s, transform 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
-.kpi-card:hover { border-color: rgba(124,106,255,0.3); transform: translateY(-2px); }
+.kpi-card:hover { border-color: rgba(99,85,232,0.3); transform: translateY(-2px); }
 .kpi-card::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
   background: var(--accent-color, var(--accent));
 }
+/* Dark KPI card (Total Revenue) */
+.kpi-card.dark {
+  background: var(--dark-surface);
+  border-color: var(--dark-border);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.kpi-card.dark .kpi-label { color: rgba(255,255,255,0.45); }
+.kpi-card.dark .kpi-value { color: #ffffff; }
+.kpi-card.dark .kpi-sub .kpi-badge.badge-up { background: rgba(52,211,153,0.2); color: #34d399; }
+.kpi-card.dark .kpi-sub .kpi-badge.badge-down { background: rgba(255,100,100,0.2); color: #ff6a6a; }
 .kpi-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
-.kpi-value { font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 1px; line-height: 1; margin-bottom: 6px; }
+.kpi-value { font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 1px; line-height: 1; margin-bottom: 6px; color: var(--text); }
 .kpi-sub { display: flex; gap: 8px; align-items: center; }
 .kpi-badge {
   font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600;
 }
-.badge-up { background: rgba(52,211,153,0.15); color: #34d399; }
-.badge-down { background: rgba(255,106,106,0.15); color: #ff6a6a; }
-.badge-flat { background: rgba(155,155,200,0.15); color: var(--text-mid); }
+.badge-up { background: rgba(24,184,122,0.12); color: #18b87a; }
+.badge-down { background: rgba(232,85,85,0.12); color: #e85555; }
+.badge-flat { background: rgba(99,85,232,0.1); color: var(--accent); }
 .kpi-sparkline { margin-top: 12px; height: 32px; }
 
 /* SCORECARDS */
 .scorecards { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; }
 .sc-card {
-  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--dark-surface); border: 1px solid var(--dark-border); border-radius: var(--radius);
   padding: 16px; cursor: pointer; transition: all 0.2s; position: relative;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
 }
 .sc-card:hover, .sc-card.active {
-  border-color: var(--prop-color, var(--accent));
-  background: color-mix(in srgb, var(--prop-color, var(--accent)) 8%, var(--surface));
+  border-color: var(--prop-color, #8b7fff);
+  background: color-mix(in srgb, var(--prop-color, #8b7fff) 15%, var(--dark-surface));
+  transform: translateY(-2px);
 }
-.sc-prop { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
-.sc-amt { font-family: 'Bebas Neue', sans-serif; font-size: 24px; }
-.sc-meta { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
-.sc-bar { height: 3px; border-radius: 2px; margin-top: 10px; background: var(--border); }
-.sc-bar-fill { height: 100%; border-radius: 2px; background: var(--prop-color, var(--accent)); transition: width 0.6s ease; }
+.sc-prop { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; color: var(--prop-color, #8b7fff); }
+.sc-amt { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: #ffffff; }
+.sc-meta { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 4px; }
+.sc-bar { height: 3px; border-radius: 2px; margin-top: 10px; background: rgba(255,255,255,0.08); }
+.sc-bar-fill { height: 100%; border-radius: 2px; background: var(--prop-color, #8b7fff); transition: width 0.6s ease; }
 
 /* CALENDAR VIEW */
-.cal-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.cal-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
 .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 16px; }
 .cal-toolbar {
   display: flex; align-items: center; gap: 10px; padding: 14px 20px;
   border-bottom: 1px solid var(--border); background: var(--surface2);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.05);
 }
 .cal-nav { background: none; border: 1px solid var(--border); color: var(--text-dim); width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
 .cal-nav:hover { border-color: var(--accent); color: var(--text); }
@@ -197,22 +218,28 @@ select:hover { border-color: var(--accent); }
 .cal-booking .bk-guest { color: #fff; font-weight: 600; font-size: 11px; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
 .cal-booking .bk-amt { color: rgba(255,255,255,0.9); font-family: 'DM Mono', monospace; font-size: 10px; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
 .cal-booking .bk-merge { background: rgba(255,255,255,0.28); border-radius: 8px; padding: 0 4px; font-size: 8px; color: #fff; }
+/* Expanded invisible hit zone for tiny bars */
+.bk-tiny-hit {
+  position: absolute; top: -6px; bottom: -6px; left: -10px; right: -10px;
+  min-width: 32px; display: block;
+}
 .cal-booking .bk-status { margin-left: auto; font-size: 9px; background: rgba(255,255,255,0.2); padding: 1px 6px; border-radius: 10px; }
 /* Tooltip */
 #bk-tooltip {
   position: fixed; z-index: 9999;
-  background: #1a1a2e; border: 1px solid rgba(124,106,255,0.5);
+  background: #1a1a2e; border: 1px solid rgba(139,127,255,0.5);
   border-radius: 12px; padding: 14px 18px;
-  font-size: 13px; box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  font-size: 13px; box-shadow: 0 12px 40px rgba(0,0,0,0.35);
   pointer-events: none; max-width: 260px;
   animation: tipIn 0.15s ease;
+  color: #e8e8f8;
 }
 @keyframes tipIn { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform: translateY(0); } }
-#bk-tooltip .tip-name { font-weight: 700; font-size: 14px; margin-bottom: 8px; }
-#bk-tooltip .tip-row { display: flex; justify-content: space-between; gap: 16px; padding: 3px 0; font-size: 12px; color: var(--text-dim); }
-#bk-tooltip .tip-row span:last-child { color: var(--text); font-family: 'DM Mono', monospace; }
+#bk-tooltip .tip-name { font-weight: 700; font-size: 14px; margin-bottom: 8px; color: #ffffff; }
+#bk-tooltip .tip-row { display: flex; justify-content: space-between; gap: 16px; padding: 3px 0; font-size: 12px; color: rgba(255,255,255,0.45); }
+#bk-tooltip .tip-row span:last-child { color: #e8e8f8; font-family: 'DM Mono', monospace; }
 #bk-tooltip .tip-amt { font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: #34d399; margin-top: 8px; letter-spacing: 1px; }
-#bk-tooltip .tip-tag { display: inline-block; font-size: 10px; background: rgba(124,106,255,0.2); color: var(--accent); border-radius: 20px; padding: 2px 8px; margin-left: 6px; vertical-align: middle; }
+#bk-tooltip .tip-tag { display: inline-block; font-size: 10px; background: rgba(139,127,255,0.25); color: #8b7fff; border-radius: 20px; padding: 2px 8px; margin-left: 6px; vertical-align: middle; }
 
 /* CHARTS */
 
@@ -527,14 +554,14 @@ function renderHero() {
   }
 
   const kpis = [
-    { label:'Total Revenue', value: fmt(total), badge: badge(yoyPct), spark: spark(moData,'#7c6aff'), color:'#7c6aff' },
-    { label:'Bookings', value: count, badge: '', spark:'', color:'#4f8ef7' },
-    { label:'Total Nights', value: nights, badge: '', spark:'', color:'#34d399' },
-    { label:'Avg / Night', value: fmt(apd), badge: '', spark:'', color:'#fb923c' },
+    { label:'Total Revenue', value: fmt(total), badge: badge(yoyPct), spark: spark(moData,'#8b7fff'), color:'#8b7fff', dark: true },
+    { label:'Bookings', value: count, badge: '', spark:'', color:'#3478e8', dark: false },
+    { label:'Total Nights', value: nights, badge: '', spark:'', color:'#18b87a', dark: false },
+    { label:'Avg / Night', value: fmt(apd), badge: '', spark:'', color:'#e8720a', dark: false },
   ];
 
   document.getElementById('heroGrid').innerHTML = kpis.map(k => `
-    <div class="kpi-card" style="--accent-color:${k.color}">
+    <div class="kpi-card${k.dark ? ' dark' : ''}" style="--accent-color:${k.color}">
       <div class="kpi-label">${k.label}</div>
       <div class="kpi-value">${k.value}</div>
       <div class="kpi-sub">${k.badge}</div>
@@ -694,7 +721,7 @@ function renderCalendar() {
   const totalGridW = PROP_COL + totalCols * CELL_PX;
 
   // ── Header: month labels row ──
-  let monthLabelRow = `<div style="display:flex;position:sticky;top:0;z-index:8;background:var(--surface);border-bottom:1px solid var(--border);">
+  let monthLabelRow = `<div style="display:flex;position:sticky;top:0;z-index:8;background:var(--surface);border-bottom:1px solid var(--border);box-shadow:0 2px 4px rgba(0,0,0,0.05);">
     <div style="width:${PROP_COL}px;flex-shrink:0;border-right:1px solid var(--border);"></div>
     <div style="display:flex;flex:1;position:relative;">`;
 
@@ -706,7 +733,7 @@ function renderCalendar() {
   monthLabelRow += '</div></div>';
 
   // ── Header: day numbers row ──
-  let dayRow = `<div style="display:flex;position:sticky;top:28px;z-index:7;background:var(--surface2);border-bottom:1px solid var(--border);">
+  let dayRow = `<div style="display:flex;position:sticky;top:28px;z-index:7;background:var(--surface2);border-bottom:1px solid var(--border);box-shadow:0 2px 4px rgba(0,0,0,0.04);">
     <div style="width:${PROP_COL}px;flex-shrink:0;padding:4px 8px;font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;border-right:1px solid var(--border);display:flex;align-items:center;">Property</div>
     <div style="display:flex;">`;
 
@@ -781,28 +808,29 @@ function renderCalendar() {
 
       totalVisible++;
       const tipArgs = `${JSON.stringify(guestName)},${JSON.stringify(b._origArr||b.arr)},${JSON.stringify(b._origDep||b.dep)},${JSON.stringify(amtDisplay)},${b.nights},${b._merged||false}`;
-      // Estimate label width to decide display mode
       const labelText = guestName + '  ' + amtDisplay;
       const estLabelPx = labelText.length * 6.5 + 16;
-      const showAmt = widthPx >= estLabelPx;
-      const showName = widthPx >= 30;
+      const showAmt  = widthPx >= estLabelPx;
+      const showName = widthPx >= 28;
+      const isTiny   = widthPx < 16; // barely visible sliver
       const mergeSpan = b._merged ? `<span class="bk-merge">×${b._segments}</span>` : '';
       barsHtml += `<div class="cal-booking"
-        style="left:${leftPx}px;width:${widthPx}px;background:${col};z-index:5;
+        style="left:${leftPx}px;width:${Math.max(widthPx,4)}px;background:${col};z-index:5;
                border-radius:${isStart?'5px':'2px'} ${isEnd?'5px':'2px'} ${isEnd?'5px':'2px'} ${isStart?'5px':'2px'};"
         onmouseenter="showBookingTip(this,${tipArgs})"
         onmouseleave="hideBookingTip()"
         ontouchstart="event.preventDefault();event.stopPropagation();toggleBookingTip(this,${tipArgs})"
         onclick="event.stopPropagation()">
-        <span class="bk-label">
+        ${isTiny ? '' : `<span class="bk-label">
           ${showName ? `<span class="bk-guest">${guestName}</span>${mergeSpan}` : ''}
           ${showAmt  ? `<span class="bk-amt">${amtDisplay}</span>` : ''}
-        </span>
+        </span>`}
+        ${isTiny ? `<span class="bk-tiny-hit"></span>` : ''}
       </div>`;
     });
 
     rowsHtml += `<div style="display:flex;width:${totalGridW}px;border-bottom:1px solid rgba(255,255,255,0.04);min-height:58px;">
-      <div style="width:${PROP_COL}px;flex-shrink:0;padding:8px 10px;display:flex;align-items:center;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;border-right:1px solid var(--border);color:${COLORS[prop]};position:sticky;left:0;background:var(--surface);z-index:3;">${prop}</div>
+      <div style="width:${PROP_COL}px;flex-shrink:0;padding:8px 10px;display:flex;align-items:center;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;border-right:1px solid var(--border);color:${COLORS[prop]};position:sticky;left:0;background:var(--surface);z-index:3;box-shadow:2px 0 6px rgba(0,0,0,0.06);">${prop}</div>
       <div style="position:relative;display:flex;width:${totalCols * CELL_PX}px;flex-shrink:0;overflow:visible;">
         ${cellsHtml}
         <div style="position:absolute;inset:0;pointer-events:none;overflow:visible;">${barsHtml}</div>
