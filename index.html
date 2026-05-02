@@ -73,12 +73,14 @@ select:hover { border-color: var(--accent); }
 .main { padding: 24px 32px; display: flex; flex-direction: column; gap: 24px; }
 
 /* HERO KPIS */
-.hero-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.hero-grid { display: flex; gap: 16px; }
 .kpi-card {
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 20px; position: relative; overflow: hidden;
+  padding: 20px 28px; position: relative; overflow: hidden;
   transition: border-color 0.2s, transform 0.2s;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  display: inline-flex; flex-direction: column; align-items: flex-start;
+  width: fit-content; min-width: 0;
 }
 .kpi-card:hover { border-color: rgba(99,85,232,0.3); transform: translateY(-2px); }
 .kpi-card::before {
@@ -95,8 +97,8 @@ select:hover { border-color: var(--accent); }
 .kpi-card.dark .kpi-value { color: #ffffff; }
 .kpi-card.dark .kpi-sub .kpi-badge.badge-up { background: rgba(52,211,153,0.2); color: #34d399; }
 .kpi-card.dark .kpi-sub .kpi-badge.badge-down { background: rgba(255,100,100,0.2); color: #ff6a6a; }
-.kpi-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
-.kpi-value { font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 1px; line-height: 1; margin-bottom: 6px; color: var(--text); }
+.kpi-label { font-size: 24px; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; font-weight: 500; }
+.kpi-value { font-family: 'Bebas Neue', sans-serif; font-size: 48px; letter-spacing: 2px; line-height: 1; margin-bottom: 8px; color: var(--text); }
 .kpi-sub { display: flex; gap: 8px; align-items: center; }
 .kpi-badge {
   font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600;
@@ -104,7 +106,6 @@ select:hover { border-color: var(--accent); }
 .badge-up { background: rgba(24,184,122,0.12); color: #18b87a; }
 .badge-down { background: rgba(232,85,85,0.12); color: #e85555; }
 .badge-flat { background: rgba(99,85,232,0.1); color: var(--accent); }
-.kpi-sparkline { margin-top: 12px; height: 32px; }
 
 /* SCORECARDS */
 .scorecards { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; }
@@ -118,8 +119,8 @@ select:hover { border-color: var(--accent); }
   background: color-mix(in srgb, var(--prop-color, #8b7fff) 15%, var(--dark-surface));
   transform: translateY(-2px);
 }
-.sc-prop { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; color: var(--prop-color, #8b7fff); }
-.sc-amt { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: #ffffff; }
+.sc-prop { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; color: var(--prop-color, #8b7fff); }
+.sc-amt { font-family: 'Bebas Neue', sans-serif; font-size: 30px; color: #ffffff; letter-spacing: 1px; }
 .sc-meta { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 4px; }
 .sc-bar { height: 3px; border-radius: 2px; margin-top: 10px; background: rgba(255,255,255,0.08); }
 .sc-bar-fill { height: 100%; border-radius: 2px; background: var(--prop-color, #8b7fff); transition: width 0.6s ease; }
@@ -318,12 +319,11 @@ tbody td:first-child { color: var(--text); font-family: 'DM Mono', monospace; fo
   .main { padding: 14px 12px; gap: 14px; }
 
   /* KPI Cards: 2×2 grid on mobile */
-  .hero-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .hero-grid { gap: 10px; flex-wrap: wrap; }
   .kpi-card { padding: 14px; }
   .kpi-label { font-size: 10px; letter-spacing: 1px; margin-bottom: 5px; }
   .kpi-value { font-size: 26px; }
   .kpi-badge { font-size: 10px; padding: 2px 6px; }
-  .kpi-sparkline { height: 24px; margin-top: 8px; }
 
   /* Scorecards: 2-3 per row */
   .scorecards { grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -516,9 +516,6 @@ function fmtKd(n) {
 function renderHero() {
   const f = filtered();
   const total = f.reduce((s,b) => s+b.amt, 0);
-  const count = f.length;
-  const nights = f.reduce((s,b) => s+b.nights, 0);
-  const apd = nights > 0 ? total/nights : 0;
 
   // YoY comparison
   let prevYear = selYear === 'all' ? null : String(+selYear - 1);
@@ -532,11 +529,6 @@ function renderHero() {
   
   const yoyPct = prevTotal > 0 ? ((total - prevTotal) / prevTotal * 100) : null;
 
-  // Sparkline data (monthly)
-  const moData = Array(12).fill(0);
-  (selYear === 'all' ? DATA : f).forEach(b => { moData[b.mo-1] += b.amt; });
-  const maxMo = Math.max(...moData) || 1;
-
   function badge(pct) {
     if (pct === null) return '';
     const cls = pct > 0 ? 'badge-up' : pct < 0 ? 'badge-down' : 'badge-flat';
@@ -544,29 +536,12 @@ function renderHero() {
     return `<span class="kpi-badge ${cls}">${sym} ${Math.abs(pct).toFixed(1)}% YoY</span>`;
   }
 
-  function spark(vals, color) {
-    const mx = Math.max(...vals) || 1;
-    const pts = vals.map((v,i) => `${(i/11)*100}% ${100-(v/mx*100)}%`).join(', ');
-    return `<svg class="kpi-sparkline" viewBox="0 0 100 32" preserveAspectRatio="none" style="width:100%;height:32px">
-      <polyline points="${vals.map((v,i)=>`${(i/11)*100},${32-(v/mx*30)}`).join(' ')}" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.7"/>
-      <polyline points="0,32 ${vals.map((v,i)=>`${(i/11)*100},${32-(v/mx*30)}`).join(' ')} 100,32" fill="${color}" fill-opacity="0.1" stroke="none"/>
-    </svg>`;
-  }
-
-  const kpis = [
-    { label:'Total Revenue', value: fmt(total), badge: badge(yoyPct), spark: spark(moData,'#8b7fff'), color:'#8b7fff', dark: true },
-    { label:'Bookings', value: count, badge: '', spark:'', color:'#3478e8', dark: false },
-    { label:'Total Nights', value: nights, badge: '', spark:'', color:'#18b87a', dark: false },
-    { label:'Avg / Night', value: fmt(apd), badge: '', spark:'', color:'#e8720a', dark: false },
-  ];
-
-  document.getElementById('heroGrid').innerHTML = kpis.map(k => `
-    <div class="kpi-card${k.dark ? ' dark' : ''}" style="--accent-color:${k.color}">
-      <div class="kpi-label">${k.label}</div>
-      <div class="kpi-value">${k.value}</div>
-      <div class="kpi-sub">${k.badge}</div>
-      ${k.spark}
-    </div>`).join('');
+  document.getElementById('heroGrid').innerHTML = `
+    <div class="kpi-card dark" style="--accent-color:#8b7fff">
+      <div class="kpi-label">Total Revenue</div>
+      <div class="kpi-value">${fmt(total)}</div>
+      <div class="kpi-sub">${badge(yoyPct)}</div>
+    </div>`;
 }
 
 function renderScorecards() {
@@ -807,25 +782,29 @@ function renderCalendar() {
       const amtDisplay = fmt(b.amt);
 
       totalVisible++;
-      const tipArgs = `${JSON.stringify(guestName)},${JSON.stringify(b._origArr||b.arr)},${JSON.stringify(b._origDep||b.dep)},${JSON.stringify(amtDisplay)},${b.nights},${b._merged||false}`;
+      // Store booking data as JSON in data attributes — no inline JS args
+      const bData = JSON.stringify({
+        guest: guestName,
+        arr: b._origArr||b.arr,
+        dep: b._origDep||b.dep,
+        amt: amtDisplay,
+        nights: b.nights,
+        merged: b._merged||false
+      });
       const labelText = guestName + '  ' + amtDisplay;
       const estLabelPx = labelText.length * 6.5 + 16;
       const showAmt  = widthPx >= estLabelPx;
-      const showName = widthPx >= 28;
-      const isTiny   = widthPx < 16; // barely visible sliver
+      const showName = widthPx >= 22;
       const mergeSpan = b._merged ? `<span class="bk-merge">×${b._segments}</span>` : '';
+      const barW = Math.max(widthPx, 6);
       barsHtml += `<div class="cal-booking"
-        style="left:${leftPx}px;width:${Math.max(widthPx,4)}px;background:${col};z-index:5;
-               border-radius:${isStart?'5px':'2px'} ${isEnd?'5px':'2px'} ${isEnd?'5px':'2px'} ${isStart?'5px':'2px'};"
-        onmouseenter="showBookingTip(this,${tipArgs})"
-        onmouseleave="hideBookingTip()"
-        ontouchstart="event.preventDefault();event.stopPropagation();toggleBookingTip(this,${tipArgs})"
-        onclick="event.stopPropagation()">
-        ${isTiny ? '' : `<span class="bk-label">
-          ${showName ? `<span class="bk-guest">${guestName}</span>${mergeSpan}` : ''}
-          ${showAmt  ? `<span class="bk-amt">${amtDisplay}</span>` : ''}
-        </span>`}
-        ${isTiny ? `<span class="bk-tiny-hit"></span>` : ''}
+        data-bk='${bData.replace(/'/g,"&#39;")}'
+        style="left:${leftPx}px;width:${barW}px;background:${col};z-index:5;
+               border-radius:${isStart?'5px':'2px'} ${isEnd?'5px':'2px'} ${isEnd?'5px':'2px'} ${isStart?'5px':'2px'};">
+        ${showName ? `<span class="bk-label">
+          <span class="bk-guest">${guestName}</span>${mergeSpan}
+          ${showAmt ? `<span class="bk-amt">${amtDisplay}</span>` : ''}
+        </span>` : ''}
       </div>`;
     });
 
@@ -859,80 +838,107 @@ function renderCalendar() {
   }
 }
 
-let _tipHideTimer = null;
+// ── Booking Tooltip (event delegation) ──────────────
 let _activeTipEl = null;
+let _tipHideTimer = null;
+let _mouseOnTip   = false;
 
-function positionTip(tip, rect) {
-  const margin = 12;
-  const tipW = 260, tipH = 140;
+function _positionTip(tip, rect) {
+  const margin = 10, tipW = 260;
   let left = rect.left;
-  let top  = rect.bottom + 8;
-  // Keep within viewport
+  let top  = rect.bottom + 10;
   if (left + tipW > window.innerWidth - margin) left = window.innerWidth - tipW - margin;
   if (left < margin) left = margin;
-  if (top + tipH > window.innerHeight - margin) top = rect.top - tipH - 8;
+  if (top + 160 > window.innerHeight - margin) top = rect.top - 160 - 10;
   tip.style.left = left + 'px';
   tip.style.top  = top + 'px';
 }
 
-function buildTipHtml(guest, arr, dep, amt, nights, isMerged) {
-  const nights_label = nights === 1 ? '1박' : nights + '박';
-  const apd = nights > 0 ? '$' + (parseFloat(amt.replace(/[$,]/g,'')) / nights).toFixed(0) + '/박' : '';
-  return `
-    <div class="tip-name">${guest}${isMerged ? '<span class="tip-tag">연결 예약</span>' : ''}</div>
-    <div class="tip-row"><span>입실</span><span>${arr}</span></div>
-    <div class="tip-row"><span>퇴실</span><span>${dep}</span></div>
-    <div class="tip-row"><span>숙박</span><span>${nights_label}</span></div>
+function _buildTip(d) {
+  const nl = d.nights === 1 ? '1박' : d.nights + '박';
+  const apd = d.nights > 0 ? '$' + (parseFloat(d.amt.replace(/[$,]/g,'')) / d.nights).toFixed(0) + '/박' : '';
+  return `<div class="tip-name">${d.guest}${d.merged ? '<span class="tip-tag">연결 예약</span>' : ''}</div>
+    <div class="tip-row"><span>입실</span><span>${d.arr}</span></div>
+    <div class="tip-row"><span>퇴실</span><span>${d.dep}</span></div>
+    <div class="tip-row"><span>숙박</span><span>${nl}</span></div>
     <div class="tip-row"><span>일 평균</span><span>${apd}</span></div>
-    <div class="tip-amt">${amt}</div>`;
+    <div class="tip-amt">${d.amt}</div>`;
 }
 
-function showBookingTip(el, guest, arr, dep, amt, nights, isMerged) {
+function _showTip(el, rect) {
   clearTimeout(_tipHideTimer);
-
-  // Remove old, mark active
-  const old = document.getElementById('bk-tooltip');
-  if (old) old.remove();
-  if (_activeTipEl) _activeTipEl.classList.remove('tip-active');
+  const d = JSON.parse(el.dataset.bk);
+  let tip = document.getElementById('bk-tooltip');
+  if (!tip) {
+    tip = document.createElement('div');
+    tip.id = 'bk-tooltip';
+    document.body.appendChild(tip);
+  }
+  tip.innerHTML = _buildTip(d);
+  tip.style.opacity = '1';
+  tip.style.transition = '';
+  _positionTip(tip, rect);
+  if (_activeTipEl && _activeTipEl !== el) _activeTipEl.classList.remove('tip-active');
   _activeTipEl = el;
   el.classList.add('tip-active');
-
-  const tip = document.createElement('div');
-  tip.id = 'bk-tooltip';
-  tip.innerHTML = buildTipHtml(guest, arr, dep, amt, nights, isMerged);
-  document.body.appendChild(tip);
-  positionTip(tip, el.getBoundingClientRect());
 }
 
-function hideBookingTip() {
+function _hideTip(instant) {
+  clearTimeout(_tipHideTimer);
   _tipHideTimer = setTimeout(() => {
+    if (_mouseOnTip) return; // keep open if mouse is on tooltip
     const tip = document.getElementById('bk-tooltip');
-    if (tip) { tip.style.opacity = '0'; tip.style.transition = 'opacity 0.15s'; setTimeout(() => tip.remove(), 150); }
+    if (tip) { tip.style.transition = 'opacity 0.15s'; tip.style.opacity = '0'; setTimeout(() => tip && tip.remove(), 160); }
     if (_activeTipEl) { _activeTipEl.classList.remove('tip-active'); _activeTipEl = null; }
-  }, 120);
+  }, instant ? 0 : 150);
 }
 
-function toggleBookingTip(el, guest, arr, dep, amt, nights, isMerged) {
-  // Touch: toggle tip open/close
-  const existing = document.getElementById('bk-tooltip');
-  if (existing && _activeTipEl === el) {
-    hideBookingTip();
+// Single event delegation on document
+document.addEventListener('mouseover', e => {
+  const bk = e.target.closest('.cal-booking');
+  if (bk && bk.dataset.bk) _showTip(bk, bk.getBoundingClientRect());
+});
+document.addEventListener('mouseout', e => {
+  const bk = e.target.closest('.cal-booking');
+  if (bk) { clearTimeout(_tipHideTimer); _tipHideTimer = setTimeout(() => { if (!_mouseOnTip) _hideTip(); }, 150); }
+});
+
+// Keep tooltip open when mouse moves over it
+document.addEventListener('mouseover', e => { if (e.target.closest('#bk-tooltip')) { _mouseOnTip = true; clearTimeout(_tipHideTimer); }});
+document.addEventListener('mouseout',  e => { if (e.target.closest('#bk-tooltip')) { _mouseOnTip = false; _hideTip(); }});
+
+// Click: toggle on desktop, always show on mobile touch
+document.addEventListener('click', e => {
+  const bk = e.target.closest('.cal-booking');
+  if (!bk || !bk.dataset.bk) {
+    if (!e.target.closest('#bk-tooltip')) _hideTip(true); // click outside = close
     return;
   }
-  showBookingTip(el, guest, arr, dep, amt, nights, isMerged);
-  // Auto-close on outside touch
-  setTimeout(() => {
-    document.addEventListener('touchstart', function closeTip(e) {
-      if (!e.target.closest('.cal-booking')) {
-        hideBookingTip();
-        document.removeEventListener('touchstart', closeTip);
-      }
-    });
-  }, 50);
-}
+  e.stopPropagation();
+  if (_activeTipEl === bk && document.getElementById('bk-tooltip')) {
+    _hideTip(true); // toggle off
+  } else {
+    _showTip(bk, bk.getBoundingClientRect());
+  }
+});
 
-// Close tip on scroll
-document.addEventListener('scroll', hideBookingTip, {passive:true});
+// Touch: tap to show, tap elsewhere to hide
+document.addEventListener('touchend', e => {
+  const bk = e.target.closest('.cal-booking');
+  if (bk && bk.dataset.bk) {
+    e.preventDefault();
+    if (_activeTipEl === bk && document.getElementById('bk-tooltip')) {
+      _hideTip(true);
+    } else {
+      _showTip(bk, bk.getBoundingClientRect());
+    }
+  } else if (!e.target.closest('#bk-tooltip')) {
+    _hideTip(true);
+  }
+}, {passive: false});
+
+// Close on scroll
+document.getElementById('calGridWrap') && document.getElementById('calGridWrap').addEventListener('scroll', () => _hideTip(true), {passive:true});
 
 function renderOccupancy() {
   if (selProp === 'all') {
@@ -1105,26 +1111,25 @@ function calcSplit() {
 
 update();
 
-// Drag-to-scroll on calendar
+// Drag-to-scroll: only when dragged > 4px (distinguish from click)
 (function() {
-  let isDown = false, startX, scrollLeft;
-  function initDrag() {
-    const wrap = document.getElementById('calGridWrap');
-    if (!wrap) return;
-    wrap.addEventListener('mousedown', e => {
-      if (e.target.closest('.cal-booking')) return;
-      isDown = true; startX = e.pageX - wrap.offsetLeft; scrollLeft = wrap.scrollLeft;
-      wrap.style.userSelect = 'none';
-    });
-    document.addEventListener('mouseup', () => { isDown = false; });
-    wrap.addEventListener('mousemove', e => {
-      if (!isDown) return;
-      e.preventDefault();
-      const x = e.pageX - wrap.offsetLeft;
-      wrap.scrollLeft = scrollLeft - (x - startX);
-    });
-  }
-  initDrag();
+  let isDown = false, startX, scrollLeft, moved = false;
+  const wrap = document.getElementById('calGridWrap');
+  if (!wrap) return;
+  wrap.addEventListener('mousedown', e => {
+    if (e.target.closest('.cal-booking')) return; // let booking handle it
+    isDown = true; moved = false;
+    startX = e.pageX - wrap.offsetLeft;
+    scrollLeft = wrap.scrollLeft;
+    wrap.style.userSelect = 'none';
+  });
+  document.addEventListener('mouseup', () => { isDown = false; wrap.style.userSelect = ''; });
+  wrap.addEventListener('mousemove', e => {
+    if (!isDown) return;
+    const x = e.pageX - wrap.offsetLeft;
+    const dx = x - startX;
+    if (Math.abs(dx) > 4) { moved = true; wrap.scrollLeft = scrollLeft - dx; }
+  });
 })();
 </script>
 </body>
