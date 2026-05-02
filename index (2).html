@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>USOASIS Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #f0f2f7;
+  --surface: #ffffff;
+  --surface2: #f5f6fa;
+  --border: rgba(0,0,0,0.08);
+  --text: #1a1a2e;
+  --text-dim: #8888a8;
+  --text-mid: #5555778;
+  --accent: #6355e8;
+  --accent2: #e85555;
+  --hayes: #3478e8;
+  --cedar: #18b87a;
+  --camino: #e8720a;
+  --sonoro: #d4a000;
+  --sanjuan: #d4449c;
+  --radius: 12px;
+  /* Dark card overrides */
+  --dark-bg: #12121e;
+  --dark-surface: #1c1c2e;
+  --dark-border: rgba(255,255,255,0.08);
+  --dark-text: #e8e8f8;
+  --dark-text-dim: #6666aa;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; min-height: 100vh; }
+
+/* HEADER */
+.header {
+  padding: 24px 32px 20px;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  display: flex; align-items: center; gap: 16px;
+  background: linear-gradient(135deg, #12121e 0%, #1c1c2e 100%);
+}
+.logo { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 4px; color: #fff; }
+.logo span { color: #8b7fff; }
+.header-sub { font-size: 11px; color: rgba(255,255,255,0.4); letter-spacing: 2px; text-transform: uppercase; }
+.header-right { margin-left: auto; font-family: 'DM Mono', monospace; font-size: 11px; color: rgba(255,255,255,0.35); }
+
+/* CONTROLS */
+.controls {
+  display: flex; gap: 12px; padding: 16px 32px; align-items: center; flex-wrap: wrap;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.ctrl-group { display: flex; align-items: center; gap: 8px; }
+.ctrl-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+select {
+  background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+  padding: 7px 28px 7px 12px; border-radius: 8px; font-family: inherit; font-size: 13px;
+  appearance: none; cursor: pointer; outline: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238888a8'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+  transition: border-color 0.2s;
+}
+select:hover { border-color: var(--accent); }
+.btn-split {
+  margin-left: auto; background: linear-gradient(135deg, var(--accent), #5b4fd4);
+  border: none; color: #fff; padding: 8px 18px; border-radius: 8px;
+  font-family: inherit; font-size: 13px; cursor: pointer; transition: opacity 0.2s;
+}
+.btn-split:hover { opacity: 0.85; }
+
+/* LAYOUT */
+.main { padding: 24px 32px; display: flex; flex-direction: column; gap: 24px; }
+
+/* HERO KPIS */
+.hero-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+.kpi-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 20px; position: relative; overflow: hidden;
+  transition: border-color 0.2s, transform 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.kpi-card:hover { border-color: rgba(99,85,232,0.3); transform: translateY(-2px); }
+.kpi-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--accent-color, var(--accent));
+}
+/* Dark KPI card (Total Revenue) */
+.kpi-card.dark {
+  background: var(--dark-surface);
+  border-color: var(--dark-border);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.kpi-card.dark .kpi-label { color: rgba(255,255,255,0.45); }
+.kpi-card.dark .kpi-value { color: #ffffff; }
+.kpi-card.dark .kpi-sub .kpi-badge.badge-up { background: rgba(52,211,153,0.2); color: #34d399; }
+.kpi-card.dark .kpi-sub .kpi-badge.badge-down { background: rgba(255,100,100,0.2); color: #ff6a6a; }
+.kpi-label { font-size: 14px; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; font-weight: 500; }
+.kpi-value { font-family: 'Bebas Neue', sans-serif; font-size: 48px; letter-spacing: 2px; line-height: 1; margin-bottom: 8px; color: var(--text); }
+.kpi-sub { display: flex; gap: 8px; align-items: center; }
+.kpi-badge {
+  font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600;
+}
+.badge-up { background: rgba(24,184,122,0.12); color: #18b87a; }
+.badge-down { background: rgba(232,85,85,0.12); color: #e85555; }
+.badge-flat { background: rgba(99,85,232,0.1); color: var(--accent); }
+
+/* SCORECARDS */
+.scorecards { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; }
+.sc-card {
+  background: var(--dark-surface); border: 1px solid var(--dark-border); border-radius: var(--radius);
+  padding: 16px; cursor: pointer; transition: all 0.2s; position: relative;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+}
+.sc-card:hover, .sc-card.active {
+  border-color: var(--prop-color, #8b7fff);
+  background: color-mix(in srgb, var(--prop-color, #8b7fff) 15%, var(--dark-surface));
+  transform: translateY(-2px);
+}
+.sc-prop { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; color: var(--prop-color, #8b7fff); }
+.sc-amt { font-family: 'Bebas Neue', sans-serif; font-size: 30px; color: #ffffff; letter-spacing: 1px; }
+.sc-meta { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 4px; }
+.sc-bar { height: 3px; border-radius: 2px; margin-top: 10px; background: rgba(255,255,255,0.08); }
+.sc-bar-fill { height: 100%; border-radius: 2px; background: var(--prop-color, #8b7fff); transition: width 0.6s ease; }
+
+/* CALENDAR VIEW */
+.cal-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 16px; }
+.cal-toolbar {
+  display: flex; align-items: center; gap: 10px; padding: 14px 20px;
+  border-bottom: 1px solid var(--border); background: var(--surface2);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.05);
+}
+.cal-nav { background: none; border: 1px solid var(--border); color: var(--text-dim); width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.cal-nav:hover { border-color: var(--accent); color: var(--text); }
+.cal-month-label { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; min-width: 140px; }
+.cal-today-btn { background: none; border: 1px solid var(--border); color: var(--text-dim); padding: 4px 12px; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 12px; transition: all 0.15s; }
+.cal-today-btn:hover { border-color: var(--accent); color: var(--text); }
+.cal-info { margin-left: auto; font-size: 11px; color: var(--text-dim); }
+
+/* Calendar grid */
+.cal-grid-wrap { 
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(124,106,255,0.5) rgba(255,255,255,0.05);
+  cursor: grab;
+}
+.cal-grid-wrap:active { cursor: grabbing; }
+.cal-grid-wrap::-webkit-scrollbar { height: 8px; }
+.cal-grid-wrap::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); }
+.cal-grid-wrap::-webkit-scrollbar-thumb { background: rgba(124,106,255,0.5); border-radius: 4px; }
+.cal-grid-wrap::-webkit-scrollbar-thumb:hover { background: rgba(124,106,255,0.8); }
+.cal-wrap { position: relative; }
+.cal-grid {
+  display: grid;
+  min-width: 900px;
+}
+.cal-grid-inner { display: flex; }
+.cal-prop-col { width: 120px; flex-shrink: 0; }
+.cal-days-col { flex: 1; }
+
+/* Header row */
+.cal-header-row { display: flex; border-bottom: 1px solid var(--border); }
+.cal-prop-header { width: 120px; flex-shrink: 0; padding: 8px 12px; font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+.cal-days-header { flex: 1; display: flex; }
+.cal-day-header {
+  flex: 1; min-width: 36px; text-align: center; padding: 6px 2px;
+  font-size: 11px; font-family: 'DM Mono', monospace;
+  border-left: 1px solid rgba(255,255,255,0.04);
+}
+.cal-day-header .day-name { color: var(--text-dim); font-size: 9px; text-transform: uppercase; }
+.cal-day-header .day-num { font-size: 13px; font-weight: 500; margin-top: 1px; }
+.cal-day-header.today .day-num { background: var(--accent); color: #fff; border-radius: 50%; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; }
+.cal-day-header.weekend .day-name { color: var(--accent2); opacity: 0.7; }
+
+/* Property rows */
+.cal-prop-row { display: flex; border-bottom: 1px solid rgba(255,255,255,0.04); min-height: 52px; }
+.cal-prop-row:last-child { border-bottom: none; }
+.cal-prop-name {
+  width: 120px; flex-shrink: 0; padding: 8px 12px;
+  display: flex; align-items: center;
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+  border-right: 1px solid var(--border);
+}
+.cal-cells { flex: 1; position: relative; display: flex; }
+.cal-cell {
+  flex: 1; min-width: 36px; border-left: 1px solid rgba(255,255,255,0.04);
+  position: relative; cursor: pointer;
+}
+.cal-cell:hover { background: rgba(255,255,255,0.03); }
+.cal-cell.today-col { background: rgba(124,106,255,0.05); }
+.cal-cell .rate-label {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  font-size: 9px; font-family: 'DM Mono', monospace; color: var(--text-dim);
+  pointer-events: none; white-space: nowrap;
+}
+
+/* Booking blocks */
+.cal-bookings-layer { position: absolute; inset: 0; pointer-events: none; }
+.cal-booking {
+  position: absolute; top: 6px; bottom: 6px;
+  border-radius: 6px; display: flex; align-items: center; overflow: visible;
+  padding: 0 8px; cursor: pointer; pointer-events: all;
+  transition: filter 0.15s, transform 0.15s, box-shadow 0.15s;
+  white-space: nowrap; font-size: 11px; font-weight: 500;
+  -webkit-tap-highlight-color: transparent;
+}
+.cal-booking:hover { filter: brightness(1.18); transform: scaleY(1.06); z-index: 20; box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
+.cal-booking.tip-active { filter: brightness(1.25); transform: scaleY(1.08); z-index: 21; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+/* Floating label sits outside the bar when bar is narrow */
+.cal-booking .bk-label {
+  display: flex; align-items: center; gap: 5px;
+  position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+  white-space: nowrap; pointer-events: none; z-index: 2;
+}
+.cal-booking .bk-guest { color: #fff; font-weight: 600; font-size: 11px; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+.cal-booking .bk-amt { color: rgba(255,255,255,0.9); font-family: 'DM Mono', monospace; font-size: 10px; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+.cal-booking .bk-merge { background: rgba(255,255,255,0.28); border-radius: 8px; padding: 0 4px; font-size: 8px; color: #fff; }
+/* Expanded invisible hit zone for tiny bars */
+.bk-tiny-hit {
+  position: absolute; top: -6px; bottom: -6px; left: -10px; right: -10px;
+  min-width: 32px; display: block;
+}
+.cal-booking .bk-status { margin-left: auto; font-size: 9px; background: rgba(255,255,255,0.2); padding: 1px 6px; border-radius: 10px; }
+/* Tooltip */
+#bk-tooltip {
+  position: fixed; z-index: 9999;
+  background: #1a1a2e; border: 1px solid rgba(139,127,255,0.5);
+  border-radius: 12px; padding: 14px 18px;
+  font-size: 13px; box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+  pointer-events: none; max-width: 260px;
+  animation: tipIn 0.15s ease;
+  color: #e8e8f8;
+}
+@keyframes tipIn { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform: translateY(0); } }
+#bk-tooltip .tip-name { font-weight: 700; font-size: 14px; margin-bottom: 8px; color: #ffffff; }
+#bk-tooltip .tip-row { display: flex; justify-content: space-between; gap: 16px; padding: 3px 0; font-size: 12px; color: rgba(255,255,255,0.45); }
+#bk-tooltip .tip-row span:last-child { color: #e8e8f8; font-family: 'DM Mono', monospace; }
+#bk-tooltip .tip-amt { font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: #34d399; margin-top: 8px; letter-spacing: 1px; }
+#bk-tooltip .tip-tag { display: inline-block; font-size: 10px; background: rgba(139,127,255,0.25); color: #8b7fff; border-radius: 20px; padding: 2px 8px; margin-left: 6px; vertical-align: middle; }
+
+/* CHARTS */
+
+/* OCCUPANCY */
+.occupancy-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+.occ-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px; }
+.occ-stat { text-align: center; padding: 12px; background: var(--surface2); border-radius: 8px; }
+.occ-stat-yr { font-size: 10px; color: var(--text-dim); margin-bottom: 4px; font-family: 'DM Mono', monospace; }
+.occ-stat-pct { font-family: 'Bebas Neue', sans-serif; font-size: 28px; }
+.occ-stat-sub { font-size: 10px; color: var(--text-dim); }
+.occ-chart-wrap { height: 220px; position: relative; }
+
+/* TABLE */
+.table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+.table-wrap { overflow-x: auto; max-height: 340px; overflow-y: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th {
+  padding: 10px 12px; text-align: left; font-size: 11px; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 1px; cursor: pointer; user-select: none;
+  border-bottom: 1px solid var(--border); white-space: nowrap; background: var(--surface);
+  position: sticky; top: 0;
+}
+thead th:hover { color: var(--text); }
+thead th.sort-asc::after { content: ' ▲'; color: var(--accent); }
+thead th.sort-desc::after { content: ' ▼'; color: var(--accent); }
+tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.1s; }
+tbody tr:hover { background: rgba(255,255,255,0.03); }
+tbody td { padding: 9px 12px; color: var(--text-mid); }
+tbody td:first-child { color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px; }
+.td-amt { font-family: 'DM Mono', monospace; color: var(--text) !important; font-weight: 500; }
+
+/* MODAL */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 16px;
+  padding: 28px; width: 420px; max-width: 95vw;
+}
+.modal h3 { font-size: 18px; margin-bottom: 20px; }
+.form-row { margin-bottom: 16px; }
+.form-row label { display: block; font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.form-row input {
+  width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text);
+  padding: 10px 14px; border-radius: 8px; font-family: 'DM Mono', monospace; font-size: 14px;
+  outline: none; transition: border-color 0.2s;
+}
+.form-row input:focus { border-color: var(--accent); }
+.modal-result {
+  background: var(--bg); border-radius: 10px; padding: 16px; margin-top: 16px; display: none;
+}
+.modal-result-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.modal-result-row:last-child { border-bottom: none; }
+.modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+.btn-calc { flex: 1; background: var(--accent); color: #fff; border: none; padding: 11px; border-radius: 8px; font-family: inherit; font-size: 14px; cursor: pointer; }
+.btn-close { background: var(--surface); color: var(--text-dim); border: 1px solid var(--border); padding: 11px 20px; border-radius: 8px; font-family: inherit; font-size: 14px; cursor: pointer; }
+
+.hidden { display: none !important; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+/* ── Mobile Responsive ───────────────────── */
+@media (max-width: 768px) {
+  .header { padding: 16px 16px 14px; }
+  .logo { font-size: 24px; }
+  .controls { padding: 10px 16px; gap: 8px; }
+  .controls .ctrl-group { gap: 6px; }
+  .ctrl-label { display: none; }
+  select { font-size: 12px; padding: 6px 22px 6px 8px; }
+  .btn-split { padding: 7px 12px; font-size: 12px; }
+  .main { padding: 14px 12px; gap: 14px; }
+
+  /* KPI Cards: 2×2 grid on mobile */
+  .hero-grid { grid-template-columns: 1fr; gap: 10px; }
+  .kpi-card { padding: 14px; }
+  .kpi-label { font-size: 10px; letter-spacing: 1px; margin-bottom: 5px; }
+  .kpi-value { font-size: 26px; }
+  .kpi-badge { font-size: 10px; padding: 2px 6px; }
+
+  /* Scorecards: 2-3 per row */
+  .scorecards { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .sc-card { padding: 10px; }
+  .sc-prop { font-size: 9px; letter-spacing: 0.5px; margin-bottom: 5px; }
+  .sc-amt { font-size: 16px; }
+  .sc-meta { font-size: 9px; }
+
+  /* Calendar toolbar */
+  .cal-toolbar { padding: 10px 14px; gap: 8px; }
+  .cal-month-label { font-size: 18px; }
+  .cal-info { font-size: 10px; }
+
+  /* Occupancy */
+  .occ-stats { grid-template-columns: repeat(3,1fr); gap: 8px; }
+  .occ-stat-pct { font-size: 22px; }
+  .occ-chart-wrap { height: 180px; }
+
+  /* Table */
+  .table-wrap { font-size: 12px; }
+  tbody td { padding: 7px 8px; }
+  thead th { padding: 8px 8px; font-size: 10px; }
+}
+
+@media (max-width: 480px) {
+  /* Scorecards: 2 per row on very small screens */
+  .scorecards { grid-template-columns: repeat(2, 1fr); }
+  .sc-meta { display: none; }
+
+  /* KPI still 2×2 */
+  .kpi-value { font-size: 22px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="logo">US<span>O</span>ASIS</div>
+    <div class="header-sub">Rental Revenue Dashboard</div>
+  </div>
+  <div class="header-right" id="lastUpdate"></div>
+</div>
+
+<div class="controls">
+  <div class="ctrl-group">
+    <span class="ctrl-label">Year</span>
+    <select id="selYear">
+      <option value="all">All Years</option>
+      <option value="2024">2024</option>
+      <option value="2025">2025</option>
+      <option value="2026" selected>2026</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <span class="ctrl-label">Month</span>
+    <select id="selMonth">
+      <option value="all">All Months</option>
+      <option value="1">January</option><option value="2">February</option>
+      <option value="3">March</option><option value="4">April</option>
+      <option value="5">May</option><option value="6">June</option>
+      <option value="7">July</option><option value="8">August</option>
+      <option value="9">September</option><option value="10">October</option>
+      <option value="11">November</option><option value="12">December</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <span class="ctrl-label">Property</span>
+    <select id="selProp">
+      <option value="all">All Properties</option>
+      <option value="Hayes">Hayes</option>
+      <option value="Cedar">Cedar</option>
+      <option value="Camino">Camino</option>
+      <option value="Sonoro">Sonoro</option>
+      <option value="San Juan">San Juan</option>
+    </select>
+  </div>
+  <button class="btn-split" onclick="openSplit()">매출분할계산</button>
+</div>
+
+<div class="main">
+  <!-- KPI Cards -->
+  <div class="hero-grid" id="heroGrid"></div>
+  <!-- Scorecards -->
+  <div class="scorecards" id="scorecards"></div>
+  <!-- Calendar View -->
+  <div class="cal-wrap">
+    <div class="cal-toolbar">
+      <div class="cal-month-label" id="calMonthLabel"></div>
+      <button class="cal-today-btn" onclick="calScrollToday()">Today</button>
+      <div class="cal-info" id="calInfo"></div>
+    </div>
+    <div class="cal-grid-wrap" id="calGridWrap">
+      <div id="calGrid"></div>
+    </div>
+  </div>
+
+  <!-- Occupancy (shown when specific property selected) -->
+  <div class="occupancy-card hidden" id="occCard">
+    <div class="section-title" id="occTitle">Occupancy Rate</div>
+    <div class="occ-stats" id="occStats"></div>
+    <div class="occ-chart-wrap"><canvas id="occChart"></canvas></div>
+  </div>
+  <!-- Table (shown when specific property selected) -->
+  <div class="table-card hidden" id="tableCard">
+    <div class="section-title" id="tableTitle">Booking Details</div>
+    <div class="table-wrap">
+      <table id="bookingTable">
+        <thead>
+          <tr>
+            <th onclick="sortTable('arr')">Arrival</th>
+            <th onclick="sortTable('dep')">Departure</th>
+            <th onclick="sortTable('nights')">Nights</th>
+            <th onclick="sortTable('amt')">Amount</th>
+            <th onclick="sortTable('apd')">Per Night</th>
+            <th onclick="sortTable('guest')">Guest</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Split Calculator Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3>매출분할계산</h3>
+    <div class="form-row">
+      <label>입실 날짜 (MM/DD)</label>
+      <input id="inArrival" type="text" placeholder="예: 3/25" maxlength="5">
+    </div>
+    <div class="form-row">
+      <label>퇴실 날짜 (MM/DD)</label>
+      <input id="inDepart" type="text" placeholder="예: 4/3" maxlength="5">
+    </div>
+    <div class="form-row">
+      <label>총 금액 ($)</label>
+      <input id="inAmount" type="number" placeholder="예: 1000">
+    </div>
+    <div class="modal-result" id="calcResult"></div>
+    <div class="modal-btns">
+      <button class="btn-close" onclick="closeModal()">닫기</button>
+      <button class="btn-calc" onclick="calcSplit()">계산하기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA=[{prop:'Hayes',arr:'2026-01-17',dep:'2026-01-20',nights:3,amt:510.22,apd:170.07,guest:'Ana1',yr:2026,mo:1},{prop:'Sonoro',arr:'2026-01-01',dep:'2026-01-04',nights:3,amt:403.14,apd:134.38,guest:'Sonia4',yr:2026,mo:1},{prop:'Cedar',arr:'2026-01-05',dep:'2026-01-12',nights:7,amt:1040.89,apd:148.7,guest:'Taya4',yr:2026,mo:1},{prop:'Camino',arr:'2026-01-07',dep:'2026-01-14',nights:7,amt:1053.17,apd:150.45,guest:'Robert5',yr:2026,mo:1},{prop:'Sonoro',arr:'2026-01-04',dep:'2026-01-11',nights:7,amt:940.67,apd:134.38,guest:'Victor',yr:2026,mo:1},{prop:'Cedar',arr:'2026-01-13',dep:'2026-01-24',nights:11,amt:1724.39,apd:156.76,guest:'Mustafa',yr:2026,mo:1},{prop:'Camino',arr:'2026-01-16',dep:'2026-01-18',nights:2,amt:309.91,apd:154.96,guest:'Mercy6',yr:2026,mo:1},{prop:'Sonoro',arr:'2026-01-12',dep:'2026-01-17',nights:5,amt:829.35,apd:165.87,guest:'Tate8',yr:2026,mo:1},{prop:'Sonoro',arr:'2026-01-17',dep:'2026-01-19',nights:2,amt:385.09,apd:192.54,guest:'Keven1',yr:2026,mo:1},{prop:'Camino',arr:'2026-01-22',dep:'2026-01-30',nights:8,amt:1032.42,apd:129.05,guest:'Michael3',yr:2026,mo:1},{prop:'Camino',arr:'2026-01-30',dep:'2026-02-01',nights:2,amt:332.39,apd:166.19,guest:'Seth3',yr:2026,mo:1},{prop:'Hayes',arr:'2026-02-13',dep:'2026-02-16',nights:3,amt:678.03,apd:226.01,guest:'Darissa6',yr:2026,mo:2},{prop:'Cedar',arr:'2026-02-01',dep:'2026-03-02',nights:29,amt:3277.93,apd:113.03,guest:'Susan',yr:2026,mo:2},{prop:'Camino',arr:'2026-02-01',dep:'2026-02-02',nights:1,amt:116.19,apd:116.19,guest:'Seth3',yr:2026,mo:2},{prop:'Hayes',arr:'2026-02-18',dep:'2026-02-25',nights:7,amt:741.34,apd:105.91,guest:'Nicholas2',yr:2026,mo:2},{prop:'Camino',arr:'2026-02-05',dep:'2026-02-11',nights:6,amt:1002.98,apd:167.16,guest:'John4',yr:2026,mo:2},{prop:'Sonoro',arr:'2026-02-16',dep:'2026-03-01',nights:13,amt:1622.81,apd:124.83,guest:'Taya',yr:2026,mo:2},{prop:'Hayes',arr:'2026-02-25',dep:'2026-03-01',nights:4,amt:571.51,apd:142.88,guest:'Jared3',yr:2026,mo:2},{prop:'Camino',arr:'2026-02-13',dep:'2026-02-17',nights:4,amt:760.48,apd:190.12,guest:'Tylor',yr:2026,mo:2},{prop:'Camino',arr:'2026-02-17',dep:'2026-02-20',nights:3,amt:498.58,apd:166.19,guest:'Walter3',yr:2026,mo:2},{prop:'Camino',arr:'2026-02-20',dep:'2026-02-23',nights:3,amt:450.0,apd:150.0,guest:'Lasan3',yr:2026,mo:2},{prop:'Camino',arr:'2026-02-23',dep:'2026-03-01',nights:6,amt:805.62,apd:134.27,guest:'Devonte2',yr:2026,mo:2},{prop:'Hayes',arr:'2026-03-01',dep:'2026-03-15',nights:14,amt:2000.27,apd:142.88,guest:'Jared3',yr:2026,mo:3},{prop:'Cedar',arr:'2026-03-01',dep:'2026-03-02',nights:1,amt:117.07,apd:117.07,guest:'Susan',yr:2026,mo:3},{prop:'Camino',arr:'2026-03-01',dep:'2026-03-11',nights:10,amt:1342.7,apd:134.27,guest:'Devonte2',yr:2026,mo:3},{prop:'Sonoro',arr:'2026-03-01',dep:'2026-03-13',nights:12,amt:1497.99,apd:124.83,guest:'Taya',yr:2026,mo:3},{prop:'Hayes',arr:'2026-03-15',dep:'2026-03-20',nights:5,amt:871.06,apd:174.21,guest:'Jessica7',yr:2026,mo:3},{prop:'Cedar',arr:'2026-03-02',dep:'2026-03-05',nights:3,amt:527.68,apd:175.89,guest:'Chelsie4',yr:2026,mo:3},{prop:'Sonoro',arr:'2026-03-13',dep:'2026-03-16',nights:3,amt:539.32,apd:179.77,guest:'Kendra2',yr:2026,mo:3},{prop:'Hayes',arr:'2026-03-20',dep:'2026-03-27',nights:7,amt:1010.16,apd:144.31,guest:'Taya',yr:2026,mo:3},{prop:'Cedar',arr:'2026-03-06',dep:'2026-03-09',nights:3,amt:527.68,apd:175.89,guest:'Ana4',yr:2026,mo:3},{prop:'Camino',arr:'2026-03-12',dep:'2026-03-15',nights:3,amt:533.5,apd:177.83,guest:'Milap4',yr:2026,mo:3},{prop:'Sonoro',arr:'2026-03-16',dep:'2026-03-19',nights:3,amt:539.32,apd:179.77,guest:'Chelsie5',yr:2026,mo:3},{prop:'Hayes',arr:'2026-03-27',dep:'2026-03-28',nights:1,amt:266.75,apd:266.75,guest:'Jose1',yr:2026,mo:3},{prop:'Cedar',arr:'2026-03-09',dep:'2026-03-13',nights:4,amt:658.63,apd:164.66,guest:'Kyle4',yr:2026,mo:3},{prop:'Camino',arr:'2026-03-15',dep:'2026-03-21',nights:6,amt:1261.0,apd:210.17,guest:'Shayne5',yr:2026,mo:3},{prop:'Sonoro',arr:'2026-03-19',dep:'2026-03-23',nights:4,amt:668.33,apd:167.08,guest:'Michelle6',yr:2026,mo:3},{prop:'Hayes',arr:'2026-03-28',dep:'2026-04-01',nights:4,amt:622.09,apd:155.52,guest:'Marcus4',yr:2026,mo:3},{prop:'Cedar',arr:'2026-03-09',dep:'2026-03-13',nights:4,amt:660.57,apd:165.14,guest:'Taya(cancel)',yr:2026,mo:3},{prop:'Camino',arr:'2026-03-22',dep:'2026-03-28',nights:6,amt:928.29,apd:154.72,guest:'Logan2',yr:2026,mo:3},{prop:'Sonoro',arr:'2026-03-23',dep:'2026-03-26',nights:3,amt:521.86,apd:173.95,guest:'Andrew3',yr:2026,mo:3},{prop:'Cedar',arr:'2026-03-13',dep:'2026-03-15',nights:2,amt:460.75,apd:230.38,guest:'Nelson6',yr:2026,mo:3},{prop:'Camino',arr:'2026-03-28',dep:'2026-03-30',nights:2,amt:404.49,apd:202.25,guest:'Jose1',yr:2026,mo:3},{prop:'Sonoro',arr:'2026-03-26',dep:'2026-03-30',nights:4,amt:646.99,apd:161.75,guest:'Joel6',yr:2026,mo:3},{prop:'Cedar',arr:'2026-03-16',dep:'2026-03-21',nights:5,amt:989.4,apd:197.88,guest:'Alanna8',yr:2026,mo:3},{prop:'Camino',arr:'2026-03-31',dep:'2026-04-01',nights:1,amt:164.66,apd:164.66,guest:'David4',yr:2026,mo:3},{prop:'Sonoro',arr:'2026-03-30',dep:'2026-04-01',nights:2,amt:325.44,apd:162.72,guest:'Taya',yr:2026,mo:3},{prop:'Cedar',arr:'2026-03-22',dep:'2026-04-01',nights:10,amt:1446.18,apd:144.62,guest:'Arvonda3',yr:2026,mo:3},{prop:'Hayes',arr:'2026-04-01',dep:'2026-04-03',nights:2,amt:311.05,apd:155.53,guest:'Marcus4',yr:2026,mo:4},{prop:'Cedar',arr:'2026-04-01',dep:'2026-04-02',nights:1,amt:144.62,apd:144.62,guest:'Arvonda3',yr:2026,mo:4},{prop:'Camino',arr:'2026-04-01',dep:'2026-04-04',nights:3,amt:493.97,apd:164.66,guest:'David4',yr:2026,mo:4},{prop:'Sonoro',arr:'2026-04-01',dep:'2026-04-03',nights:2,amt:325.44,apd:162.72,guest:'Taya',yr:2026,mo:4},{prop:'Hayes',arr:'2026-04-03',dep:'2026-04-07',nights:4,amt:706.16,apd:176.54,guest:'Rosa7',yr:2026,mo:4},{prop:'Cedar',arr:'2026-04-02',dep:'2026-04-06',nights:4,amt:727.5,apd:181.88,guest:'Isarel8',yr:2026,mo:4},{prop:'Camino',arr:'2026-04-04',dep:'2026-04-09',nights:5,amt:808.01,apd:161.6,guest:'Christine4',yr:2026,mo:4},{prop:'Sonoro',arr:'2026-04-03',dep:'2026-04-05',nights:2,amt:392.85,apd:196.43,guest:'Isabel3',yr:2026,mo:4},{prop:'Hayes',arr:'2026-04-07',dep:'2026-04-11',nights:4,amt:682.88,apd:170.72,guest:'Megan7',yr:2026,mo:4},{prop:'Cedar',arr:'2026-04-06',dep:'2026-05-01',nights:25,amt:3511.4,apd:140.46,guest:'Taya3',yr:2026,mo:4},{prop:'Camino',arr:'2026-04-13',dep:'2026-04-16',nights:3,amt:539.32,apd:179.77,guest:'Brian3',yr:2026,mo:4},{prop:'Sonoro',arr:'2026-04-05',dep:'2026-04-30',nights:25,amt:3395.0,apd:135.8,guest:'Heather4',yr:2026,mo:4},{prop:'Hayes',arr:'2026-04-17',dep:'2026-04-19',nights:2,amt:398.67,apd:199.34,guest:'Nevada6',yr:2026,mo:4},{prop:'Camino',arr:'2026-04-18',dep:'2026-04-21',nights:3,amt:539.32,apd:179.77,guest:'Gloria1',yr:2026,mo:4},{prop:'Camino',arr:'2026-04-23',dep:'2026-04-26',nights:3,amt:560.66,apd:186.89,guest:'Sarah4',yr:2026,mo:4},{prop:'Camino',arr:'2026-04-27',dep:'2026-05-01',nights:4,amt:531.53,apd:132.88,guest:'Taya3',yr:2026,mo:4},{prop:'Hayes',arr:'2026-05-01',dep:'2026-05-02',nights:1,amt:157.74,apd:157.74,guest:'Todd2',yr:2026,mo:5},{prop:'Camino',arr:'2026-05-01',dep:'2026-05-15',nights:14,amt:1860.35,apd:132.88,guest:'Taya3',yr:2026,mo:5},{prop:'Sonoro',arr:'2026-05-01',dep:'2026-05-04',nights:3,amt:521.86,apd:173.95,guest:'Jose2',yr:2026,mo:5},{prop:'San Juan',arr:'2026-05-01',dep:'2026-05-31',nights:30,amt:3000.0,apd:100.0,guest:'Heather4',yr:2026,mo:5},{prop:'Hayes',arr:'2026-05-03',dep:'2026-05-09',nights:6,amt:926.35,apd:154.39,guest:'Lenwood2',yr:2026,mo:5},{prop:'Cedar',arr:'2026-05-03',dep:'2026-05-07',nights:4,amt:674.15,apd:168.54,guest:'Aaron3',yr:2026,mo:5},{prop:'Sonoro',arr:'2026-05-04',dep:'2026-05-07',nights:3,amt:521.86,apd:173.95,guest:'Chelsie4',yr:2026,mo:5},{prop:'Cedar',arr:'2026-05-15',dep:'2026-05-18',nights:3,amt:558.72,apd:186.24,guest:'Jennifer8',yr:2026,mo:5},{prop:'Hayes',arr:'2026-05-16',dep:'2026-05-22',nights:6,amt:986.49,apd:164.41,guest:'Meichelle9',yr:2026,mo:5},{prop:'Cedar',arr:'2026-05-20',dep:'2026-05-23',nights:3,amt:607.22,apd:202.41,guest:'Kia1',yr:2026,mo:5},{prop:'Camino',arr:'2026-05-19',dep:'2026-05-23',nights:4,amt:731.38,apd:182.84,guest:'Catherine1',yr:2026,mo:5},{prop:'Sonoro',arr:'2026-05-18',dep:'2026-05-23',nights:5,amt:888.52,apd:177.7,guest:'Lanita6',yr:2026,mo:5},{prop:'Camino',arr:'2026-06-02',dep:'2026-06-06',nights:4,amt:674.15,apd:168.54,guest:'David3',yr:2026,mo:6},{prop:'Hayes',arr:'2026-06-11',dep:'2026-06-14',nights:3,amt:561.63,apd:187.21,guest:'Rebecca8',yr:2026,mo:6},{prop:'Cedar',arr:'2026-06-16',dep:'2026-06-21',nights:5,amt:808.98,apd:161.8,guest:'Sadie5',yr:2026,mo:6},{prop:'Camino',arr:'2026-06-14',dep:'2026-07-01',nights:17,amt:2210.39,apd:130.02,guest:'Kenze4',yr:2026,mo:6},{prop:'Camino',arr:'2026-07-01',dep:'2026-07-25',nights:24,amt:3120.54,apd:130.02,guest:'Kenze4',yr:2026,mo:7},{prop:'Camino',arr:'2026-08-31',dep:'2026-09-01',nights:1,amt:130.76,apd:130.76,guest:'Romie4',yr:2026,mo:8},{prop:'Camino',arr:'2026-09-01',dep:'2026-09-11',nights:10,amt:1307.6,apd:130.76,guest:'Romie4',yr:2026,mo:9},{prop:'Cedar',arr:'2026-10-16',dep:'2026-10-18',nights:2,amt:522.83,apd:261.42,guest:'Esmeralda8',yr:2026,mo:10},{prop:'Hayes',arr:'2025-01-10',dep:'2025-01-12',nights:2,amt:404.49,apd:202.25,guest:'Ali6',yr:2025,mo:1},{prop:'Cedar',arr:'2025-01-01',dep:'2025-01-02',nights:1,amt:262.79,apd:262.79,guest:'Maria8',yr:2025,mo:1},{prop:'Camino',arr:'2025-01-01',dep:'2025-01-06',nights:5,amt:882.7,apd:176.54,guest:'Jimmy7',yr:2025,mo:1},{prop:'Hayes',arr:'2025-01-13',dep:'2025-01-16',nights:3,amt:510.22,apd:170.07,guest:'Joe5',yr:2025,mo:1},{prop:'Cedar',arr:'2025-01-06',dep:'2025-02-01',nights:26,amt:4039.36,apd:155.36,guest:'Taya2',yr:2025,mo:1},{prop:'Camino',arr:'2025-01-08',dep:'2025-01-20',nights:12,amt:1830.55,apd:152.55,guest:'Jen6',yr:2025,mo:1},{prop:'Hayes',arr:'2025-01-17',dep:'2025-01-20',nights:3,amt:624.68,apd:208.23,guest:'Sarah8',yr:2025,mo:1},{prop:'Camino',arr:'2025-01-21',dep:'2025-01-31',nights:10,amt:1453.41,apd:145.34,guest:'Eric2',yr:2025,mo:1},{prop:'Hayes',arr:'2025-01-20',dep:'2025-01-24',nights:4,amt:635.35,apd:158.84,guest:'Jibran4',yr:2025,mo:1},{prop:'Hayes',arr:'2025-01-28',dep:'2025-02-01',nights:4,amt:815.44,apd:203.86,guest:'Mark7',yr:2025,mo:1},{prop:'Camino',arr:'2025-01-31',dep:'2025-02-01',nights:1,amt:246.86,apd:246.86,guest:'Irvin7',yr:2025,mo:1},{prop:'Hayes',arr:'2025-02-01',dep:'2025-02-03',nights:2,amt:407.72,apd:203.86,guest:'Mark7',yr:2025,mo:2},{prop:'Cedar',arr:'2025-02-01',dep:'2025-02-14',nights:13,amt:2019.68,apd:155.36,guest:'Taya2',yr:2025,mo:2},{prop:'Camino',arr:'2025-02-01',dep:'2025-02-02',nights:1,amt:246.87,apd:246.87,guest:'Irvin7',yr:2025,mo:2},{prop:'Hayes',arr:'2025-02-03',dep:'2025-02-07',nights:4,amt:724.59,apd:181.15,guest:'Robert3',yr:2025,mo:2},{prop:'Cedar',arr:'2025-02-15',dep:'2025-02-16',nights:1,amt:260.93,apd:260.93,guest:'Chieko4',yr:2025,mo:2},{prop:'Camino',arr:'2025-02-02',dep:'2025-02-06',nights:4,amt:731.38,apd:182.84,guest:'Eric2',yr:2025,mo:2},{prop:'Hayes',arr:'2025-02-07',dep:'2025-02-09',nights:2,amt:469.48,apd:234.74,guest:'Christina5',yr:2025,mo:2},{prop:'Cedar',arr:'2025-02-19',dep:'2025-02-21',nights:2,amt:376.36,apd:188.18,guest:'Desiree4',yr:2025,mo:2},{prop:'Camino',arr:'2025-02-06',dep:'2025-02-08',nights:2,amt:467.54,apd:233.77,guest:'Atti7',yr:2025,mo:2},{prop:'Hayes',arr:'2025-02-10',dep:'2025-02-14',nights:4,amt:654.75,apd:163.69,guest:'Jaafe4',yr:2025,mo:2},{prop:'Cedar',arr:'2025-02-21',dep:'2025-02-24',nights:3,amt:764.36,apd:254.79,guest:'Kurt5',yr:2025,mo:2},{prop:'Camino',arr:'2025-02-09',dep:'2025-02-11',nights:2,amt:446.2,apd:223.1,guest:'Scott1',yr:2025,mo:2},{prop:'Hayes',arr:'2025-02-14',dep:'2025-02-17',nights:3,amt:539.32,apd:179.77,guest:'Evan4',yr:2025,mo:2},{prop:'Cedar',arr:'2025-02-24',dep:'2025-03-01',nights:5,amt:772.2,apd:154.44,guest:'Henry1',yr:2025,mo:2},{prop:'Camino',arr:'2025-02-13',dep:'2025-02-16',nights:3,amt:616.92,apd:205.64,guest:'Marlee4',yr:2025,mo:2},{prop:'Hayes',arr:'2025-02-20',dep:'2025-02-24',nights:4,amt:907.92,apd:226.98,guest:'Paul5',yr:2025,mo:2},{prop:'Camino',arr:'2025-02-18',dep:'2025-02-20',nights:2,amt:385.09,apd:192.54,guest:'Lydia4',yr:2025,mo:2},{prop:'Hayes',arr:'2025-02-24',dep:'2025-03-01',nights:5,amt:880.27,apd:176.05,guest:'Norina5',yr:2025,mo:2},{prop:'Camino',arr:'2025-02-21',dep:'2025-02-23',nights:2,amt:527.68,apd:263.84,guest:'Marissa4',yr:2025,mo:2},{prop:'Camino',arr:'2025-02-23',dep:'2025-03-01',nights:6,amt:953.51,apd:158.92,guest:'Shannon4',yr:2025,mo:2},{prop:'Hayes',arr:'2025-03-01',dep:'2025-03-02',nights:1,amt:176.05,apd:176.05,guest:'Norina5',yr:2025,mo:3},{prop:'Cedar',arr:'2025-03-01',dep:'2025-03-07',nights:6,amt:926.7,apd:154.45,guest:'Henry1',yr:2025,mo:3},{prop:'Camino',arr:'2025-03-02',dep:'2025-03-09',nights:7,amt:1176.84,apd:168.12,guest:'Allo3',yr:2025,mo:3},{prop:'Hayes',arr:'2025-03-02',dep:'2025-03-09',nights:7,amt:1076.27,apd:153.75,guest:'Allo2',yr:2025,mo:3},{prop:'Cedar',arr:'2025-03-10',dep:'2025-03-12',nights:2,amt:398.67,apd:199.34,guest:'Jeremy2',yr:2025,mo:3},{prop:'Camino',arr:'2025-03-11',dep:'2025-03-15',nights:4,amt:1086.4,apd:271.6,guest:'Moni7',yr:2025,mo:3},{prop:'Hayes',arr:'2025-03-12',dep:'2025-03-13',nights:1,amt:269.66,apd:269.66,guest:'Jeremy2',yr:2025,mo:3},{prop:'Cedar',arr:'2025-03-12',dep:'2025-03-16',nights:4,amt:831.29,apd:207.82,guest:'Dawna4',yr:2025,mo:3},{prop:'Camino',arr:'2025-03-15',dep:'2025-03-17',nights:2,amt:437.47,apd:218.74,guest:'Tyler',yr:2025,mo:3},{prop:'Hayes',arr:'2025-03-13',dep:'2025-03-16',nights:3,amt:893.37,apd:297.79,guest:'Christina10',yr:2025,mo:3},{prop:'Cedar',arr:'2025-03-17',dep:'2025-03-20',nights:3,amt:503.43,apd:167.81,guest:'Benito2',yr:2025,mo:3},{prop:'Camino',arr:'2025-03-17',dep:'2025-03-20',nights:3,amt:568.42,apd:189.47,guest:'Caleb4',yr:2025,mo:3},{prop:'Hayes',arr:'2025-03-19',dep:'2025-03-25',nights:6,amt:1072.82,apd:178.8,guest:'Tamela5',yr:2025,mo:3},{prop:'Cedar',arr:'2025-03-20',dep:'2025-03-24',nights:4,amt:884.64,apd:221.16,guest:'Gerald4',yr:2025,mo:3},{prop:'Camino',arr:'2025-03-20',dep:'2025-03-24',nights:4,amt:937.02,apd:234.25,guest:'Alisa4',yr:2025,mo:3},{prop:'Hayes',arr:'2025-03-28',dep:'2025-03-30',nights:2,amt:416.13,apd:208.06,guest:'Joyce4',yr:2025,mo:3},{prop:'Cedar',arr:'2025-03-24',dep:'2025-03-27',nights:3,amt:530.59,apd:176.86,guest:'Caleb4',yr:2025,mo:3},{prop:'Camino',arr:'2025-03-24',dep:'2025-03-27',nights:3,amt:716.83,apd:238.94,guest:'Tod2',yr:2025,mo:3},{prop:'Cedar',arr:'2025-03-30',dep:'2025-04-01',nights:2,amt:309.95,apd:154.97,guest:'Ryan1',yr:2025,mo:3},{prop:'Hayes',arr:'2025-04-03',dep:'2025-04-06',nights:3,amt:611.1,apd:203.7,guest:'Vicki4',yr:2025,mo:4},{prop:'Cedar',arr:'2025-04-01',dep:'2025-04-07',nights:6,amt:929.87,apd:154.98,guest:'Ryan1',yr:2025,mo:4},{prop:'Camino',arr:'2025-04-02',dep:'2025-04-06',nights:4,amt:794.43,apd:198.61,guest:'Jennifer6',yr:2025,mo:4},{prop:'Hayes',arr:'2025-04-11',dep:'2025-04-13',nights:2,amt:433.59,apd:216.79,guest:'Enrique10',yr:2025,mo:4},{prop:'Cedar',arr:'2025-04-11',dep:'2025-04-13',nights:2,amt:396.73,apd:198.37,guest:'Steve5',yr:2025,mo:4},{prop:'Camino',arr:'2025-04-10',dep:'2025-04-15',nights:5,amt:838.08,apd:167.62,guest:'Natalie6',yr:2025,mo:4},{prop:'Hayes',arr:'2025-04-17',dep:'2025-04-19',nights:2,amt:450.08,apd:225.04,guest:'Cynia10',yr:2025,mo:4},{prop:'Cedar',arr:'2025-04-18',dep:'2025-04-29',nights:11,amt:1549.9,apd:140.9,guest:'Seleste5',yr:2025,mo:4},{prop:'Camino',arr:'2025-04-18',dep:'2025-04-20',nights:2,amt:472.39,apd:236.19,guest:'Yvette6',yr:2025,mo:4},{prop:'Hayes',arr:'2025-04-25',dep:'2025-04-27',nights:2,amt:404.49,apd:202.25,guest:'Nancy4',yr:2025,mo:4},{prop:'Camino',arr:'2025-04-24',dep:'2025-04-26',nights:2,amt:455.9,apd:227.95,guest:'Ashley7',yr:2025,mo:4},{prop:'Hayes',arr:'2025-04-29',dep:'2025-05-01',nights:2,amt:274.7,apd:137.35,guest:'Leonard4',yr:2025,mo:4},{prop:'Camino',arr:'2025-04-28',dep:'2025-05-01',nights:3,amt:476.4,apd:158.8,guest:'Corey5',yr:2025,mo:4},{prop:'Hayes',arr:'2025-05-01',dep:'2025-05-11',nights:10,amt:1595.88,apd:159.59,guest:'Leonard4',yr:2025,mo:5},{prop:'Cedar',arr:'2025-05-03',dep:'2025-05-06',nights:3,amt:530.59,apd:176.86,guest:'Jessica5',yr:2025,mo:5},{prop:'Camino',arr:'2025-05-01',dep:'2025-05-02',nights:1,amt:158.8,apd:158.8,guest:'Corey5',yr:2025,mo:5},{prop:'Hayes',arr:'2025-05-12',dep:'2025-05-15',nights:3,amt:539.32,apd:179.77,guest:'Daniel4',yr:2025,mo:5},{prop:'Cedar',arr:'2025-05-07',dep:'2025-05-10',nights:3,amt:530.59,apd:176.86,guest:'Casey5',yr:2025,mo:5},{prop:'Camino',arr:'2025-05-07',dep:'2025-05-11',nights:4,amt:716.83,apd:179.21,guest:'Rachel6',yr:2025,mo:5},{prop:'Cedar',arr:'2025-05-11',dep:'2025-05-15',nights:4,amt:665.42,apd:166.35,guest:'Juli3',yr:2025,mo:5},{prop:'Camino',arr:'2025-05-14',dep:'2025-05-19',nights:5,amt:933.14,apd:186.63,guest:'Vee8',yr:2025,mo:5},{prop:'Hayes',arr:'2025-05-21',dep:'2025-05-23',nights:2,amt:445.23,apd:222.62,guest:'Patricia6',yr:2025,mo:5},{prop:'Cedar',arr:'2025-05-21',dep:'2025-05-24',nights:3,amt:619.83,apd:206.61,guest:'Jillian8',yr:2025,mo:5},{prop:'Camino',arr:'2025-05-21',dep:'2025-05-23',nights:2,amt:452.02,apd:226.01,guest:'Naterria8',yr:2025,mo:5},{prop:'Hayes',arr:'2025-05-23',dep:'2025-05-26',nights:3,amt:693.55,apd:231.18,guest:'Benita8',yr:2025,mo:5},{prop:'Cedar',arr:'2025-05-24',dep:'2025-05-26',nights:2,amt:467.54,apd:233.77,guest:'Ashely7',yr:2025,mo:5},{prop:'Camino',arr:'2025-05-23',dep:'2025-05-25',nights:2,amt:506.34,apd:253.17,guest:'Tara2',yr:2025,mo:5},{prop:'Cedar',arr:'2025-05-30',dep:'2025-06-01',nights:2,amt:395.76,apd:197.88,guest:'Linsie5',yr:2025,mo:5},{prop:'Camino',arr:'2025-05-30',dep:'2025-06-01',nights:2,amt:356.48,apd:178.24,guest:'Kenneth2',yr:2025,mo:5},{prop:'Cedar',arr:'2025-06-02',dep:'2025-06-06',nights:4,amt:665.42,apd:166.35,guest:'Drake6',yr:2025,mo:6},{prop:'Camino',arr:'2025-06-01',dep:'2025-06-03',nights:2,amt:356.48,apd:178.24,guest:'Kenneth2',yr:2025,mo:6},{prop:'Hayes',arr:'2025-06-05',dep:'2025-06-14',nights:9,amt:1313.73,apd:145.97,guest:'Brien4',yr:2025,mo:6},{prop:'Cedar',arr:'2025-06-06',dep:'2025-06-11',nights:5,amt:809.95,apd:161.99,guest:'Rene1',yr:2025,mo:6},{prop:'Camino',arr:'2025-06-06',dep:'2025-06-07',nights:1,amt:200.0,apd:200.0,guest:'사과나무교회',yr:2025,mo:6},{prop:'Hayes',arr:'2025-06-15',dep:'2025-06-21',nights:6,amt:1133.93,apd:188.99,guest:'Judy10',yr:2025,mo:6},{prop:'Cedar',arr:'2025-06-11',dep:'2025-06-14',nights:3,amt:530.59,apd:176.86,guest:'Kyle6',yr:2025,mo:6},{prop:'Camino',arr:'2025-06-09',dep:'2025-06-13',nights:4,amt:712.95,apd:178.24,guest:'Wright4',yr:2025,mo:6},{prop:'Hayes',arr:'2025-06-22',dep:'2025-06-27',nights:5,amt:770.18,apd:154.04,guest:'Rommel6',yr:2025,mo:6},{prop:'Cedar',arr:'2025-06-16',dep:'2025-06-20',nights:4,amt:626.62,apd:156.66,guest:'Drake4',yr:2025,mo:6},{prop:'Camino',arr:'2025-06-14',dep:'2025-06-23',nights:9,amt:1309.07,apd:145.45,guest:'Joshua1',yr:2025,mo:6},{prop:'Cedar',arr:'2025-06-23',dep:'2025-07-01',nights:8,amt:1114.88,apd:139.36,guest:'Taya4',yr:2025,mo:6},{prop:'Camino',arr:'2025-06-26',dep:'2025-06-29',nights:3,amt:568.42,apd:189.47,guest:'AKshdeep5',yr:2025,mo:6},{prop:'Hayes',arr:'2025-07-02',dep:'2025-07-08',nights:6,amt:943.81,apd:157.3,guest:'Linda4',yr:2025,mo:7},{prop:'Cedar',arr:'2025-07-01',dep:'2025-07-18',nights:17,amt:2369.13,apd:139.36,guest:'Taya4',yr:2025,mo:7},{prop:'Camino',arr:'2025-07-03',dep:'2025-07-06',nights:3,amt:539.32,apd:179.77,guest:'Federico4',yr:2025,mo:7},{prop:'Hayes',arr:'2025-07-11',dep:'2025-07-18',nights:7,amt:1199.97,apd:171.42,guest:'Jami12',yr:2025,mo:7},{prop:'Cedar',arr:'2025-07-18',dep:'2025-07-20',nights:2,amt:417.0,apd:208.5,guest:'직거래',yr:2025,mo:7},{prop:'Hayes',arr:'2025-07-16',dep:'2025-07-20',nights:4,amt:560.0,apd:140.0,guest:'직거래',yr:2025,mo:7},{prop:'Cedar',arr:'2025-07-25',dep:'2025-07-28',nights:3,amt:520.89,apd:173.63,guest:'Alexis2',yr:2025,mo:7},{prop:'Camino',arr:'2025-07-10',dep:'2025-07-12',nights:2,amt:417.1,apd:208.55,guest:'James4',yr:2025,mo:7},{prop:'Hayes',arr:'2025-07-25',dep:'2025-08-01',nights:7,amt:1521.59,apd:217.37,guest:'EriKa10',yr:2025,mo:7},{prop:'Cedar',arr:'2025-07-28',dep:'2025-08-01',nights:4,amt:537.92,apd:134.48,guest:'Taya4',yr:2025,mo:7},{prop:'Camino',arr:'2025-07-12',dep:'2025-07-16',nights:4,amt:712.95,apd:178.24,guest:'Ryan8',yr:2025,mo:7},{prop:'Camino',arr:'2025-07-16',dep:'2025-07-26',nights:10,amt:1348.3,apd:134.83,guest:'Norina6',yr:2025,mo:7},{prop:'Hayes',arr:'2025-08-01',dep:'2025-08-20',nights:19,amt:4130.03,apd:217.37,guest:'EriKa10',yr:2025,mo:8},{prop:'Cedar',arr:'2025-08-01',dep:'2025-08-22',nights:21,amt:2824.1,apd:134.48,guest:'Taya4',yr:2025,mo:8},{prop:'Camino',arr:'2025-08-01',dep:'2025-08-03',nights:2,amt:404.49,apd:202.25,guest:'Sweek6',yr:2025,mo:8},{prop:'Camino',arr:'2025-08-04',dep:'2025-08-08',nights:4,amt:674.15,apd:168.54,guest:'Rod5',yr:2025,mo:8},{prop:'Camino',arr:'2025-08-08',dep:'2025-08-10',nights:2,amt:404.49,apd:202.25,guest:'Lexi6',yr:2025,mo:8},{prop:'Camino',arr:'2025-08-15',dep:'2025-08-22',nights:7,amt:1106.07,apd:158.01,guest:'Berret6',yr:2025,mo:8},{prop:'Camino',arr:'2025-08-25',dep:'2025-08-29',nights:4,amt:674.15,apd:168.54,guest:'Rod5',yr:2025,mo:8},{prop:'Camino',arr:'2025-08-30',dep:'2025-09-01',nights:2,amt:323.6,apd:161.8,guest:'David2',yr:2025,mo:8},{prop:'Cedar',arr:'2025-09-02',dep:'2025-09-05',nights:3,amt:530.59,apd:176.86,guest:'Taya4',yr:2025,mo:9},{prop:'Camino',arr:'2025-09-01',dep:'2025-09-04',nights:3,amt:485.38,apd:161.79,guest:'David2',yr:2025,mo:9},{prop:'Cedar',arr:'2025-09-08',dep:'2025-10-01',nights:23,amt:3093.0,apd:134.48,guest:'Taya4',yr:2025,mo:9},{prop:'Camino',arr:'2025-09-07',dep:'2025-09-12',nights:5,amt:808.98,apd:161.8,guest:'Taya4',yr:2025,mo:9},{prop:'Camino',arr:'2025-09-14',dep:'2025-09-19',nights:5,amt:808.98,apd:161.8,guest:'Taya4',yr:2025,mo:9},{prop:'Hayes',arr:'2025-09-22',dep:'2025-09-26',nights:4,amt:635.35,apd:158.84,guest:'Tyson3',yr:2025,mo:9},{prop:'Camino',arr:'2025-09-20',dep:'2025-09-24',nights:4,amt:674.15,apd:168.54,guest:'Deja6',yr:2025,mo:9},{prop:'Hayes',arr:'2025-09-26',dep:'2025-09-29',nights:3,amt:539.32,apd:179.77,guest:'Jennifer6',yr:2025,mo:9},{prop:'Camino',arr:'2025-09-24',dep:'2025-09-28',nights:4,amt:674.15,apd:168.54,guest:'Jorge',yr:2025,mo:9},{prop:'Hayes',arr:'2025-09-29',dep:'2025-10-01',nights:2,amt:282.51,apd:141.25,guest:'Micheal4',yr:2025,mo:9},{prop:'Hayes',arr:'2025-10-01',dep:'2025-10-19',nights:18,amt:2542.56,apd:141.25,guest:'Micheal4',yr:2025,mo:10},{prop:'Cedar',arr:'2025-10-01',dep:'2025-10-03',nights:2,amt:268.96,apd:134.48,guest:'Taya4',yr:2025,mo:10},{prop:'Camino',arr:'2025-10-01',dep:'2025-10-03',nights:2,amt:404.49,apd:202.25,guest:'Sean1',yr:2025,mo:10},{prop:'Sonoro',arr:'2025-10-26',dep:'2025-10-31',nights:5,amt:625.65,apd:125.13,guest:'Yaya3',yr:2025,mo:10},{prop:'Hayes',arr:'2025-10-20',dep:'2025-10-24',nights:4,amt:674.15,apd:168.54,guest:'Micheal6',yr:2025,mo:10},{prop:'Cedar',arr:'2025-10-03',dep:'2025-10-06',nights:3,amt:536.41,apd:178.8,guest:'Yvonne1',yr:2025,mo:10},{prop:'Camino',arr:'2025-10-08',dep:'2025-10-11',nights:3,amt:554.84,apd:184.95,guest:'Cathy1',yr:2025,mo:10},{prop:'Sonoro',arr:'2025-10-31',dep:'2025-11-02',nights:2,amt:200.0,apd:100.0,guest:'목사님',yr:2025,mo:10},{prop:'Hayes',arr:'2025-10-30',dep:'2025-11-01',nights:2,amt:376.36,apd:188.18,guest:'Jacob6',yr:2025,mo:10},{prop:'Cedar',arr:'2025-10-06',dep:'2025-10-31',nights:25,amt:3685.34,apd:147.41,guest:'Rebecca7',yr:2025,mo:10},{prop:'Camino',arr:'2025-10-11',dep:'2025-10-16',nights:5,amt:711.98,apd:142.4,guest:'Jose5',yr:2025,mo:10},{prop:'Camino',arr:'2025-10-16',dep:'2025-10-19',nights:3,amt:607.22,apd:202.41,guest:'Miguel5',yr:2025,mo:10},{prop:'Camino',arr:'2025-10-20',dep:'2025-11-01',nights:12,amt:1541.16,apd:128.43,guest:'Taya4',yr:2025,mo:10},{prop:'Hayes',arr:'2025-11-01',dep:'2025-11-02',nights:1,amt:188.18,apd:188.18,guest:'Jacob6',yr:2025,mo:11},{prop:'Cedar',arr:'2025-11-02',dep:'2025-11-07',nights:5,amt:808.98,apd:161.8,guest:'Rod4',yr:2025,mo:11},{prop:'Camino',arr:'2025-11-01',dep:'2025-11-21',nights:20,amt:2568.88,apd:128.44,guest:'Taya4',yr:2025,mo:11},{prop:'Sonoro',arr:'2025-11-02',dep:'2025-11-07',nights:5,amt:760.48,apd:152.1,guest:'Taya4',yr:2025,mo:11},{prop:'Cedar',arr:'2025-11-13',dep:'2025-11-16',nights:3,amt:539.32,apd:179.77,guest:'Mark6',yr:2025,mo:11},{prop:'Camino',arr:'2025-11-22',dep:'2025-11-23',nights:1,amt:259.96,apd:259.96,guest:'Amado5',yr:2025,mo:11},{prop:'Sonoro',arr:'2025-11-09',dep:'2025-11-14',nights:5,amt:721.64,apd:144.33,guest:'Taya4',yr:2025,mo:11},{prop:'Hayes',arr:'2025-11-12',dep:'2025-11-17',nights:5,amt:800.0,apd:160.0,guest:'사모님',yr:2025,mo:11},{prop:'Cedar',arr:'2025-11-17',dep:'2025-11-21',nights:4,amt:635.35,apd:158.84,guest:'Fausto4',yr:2025,mo:11},{prop:'Camino',arr:'2025-11-23',dep:'2025-11-26',nights:3,amt:519.92,apd:173.31,guest:'Taya4',yr:2025,mo:11},{prop:'Sonoro',arr:'2025-11-14',dep:'2025-11-16',nights:2,amt:385.09,apd:192.54,guest:'Alana4',yr:2025,mo:11},{prop:'Hayes',arr:'2025-11-17',dep:'2025-11-20',nights:3,amt:484.03,apd:161.34,guest:'Maria4',yr:2025,mo:11},{prop:'Cedar',arr:'2025-11-23',dep:'2025-11-26',nights:3,amt:510.22,apd:170.07,guest:'Taya4',yr:2025,mo:11},{prop:'Camino',arr:'2025-11-26',dep:'2025-11-29',nights:3,amt:689.67,apd:229.89,guest:'Rafael5',yr:2025,mo:11},{prop:'Sonoro',arr:'2025-11-16',dep:'2025-11-21',nights:5,amt:760.48,apd:152.1,guest:'Taya4',yr:2025,mo:11},{prop:'Hayes',arr:'2025-11-23',dep:'2025-11-29',nights:6,amt:966.03,apd:161.0,guest:'Albert3',yr:2025,mo:11},{prop:'Cedar',arr:'2025-11-26',dep:'2025-12-01',nights:5,amt:1081.55,apd:216.31,guest:'Mustafa',yr:2025,mo:11},{prop:'Sonoro',arr:'2025-11-24',dep:'2025-12-01',nights:7,amt:909.97,apd:130.0,guest:'Efren7',yr:2025,mo:11},{prop:'Hayes',arr:'2025-12-01',dep:'2025-12-07',nights:6,amt:905.01,apd:150.84,guest:'Taya3',yr:2025,mo:12},{prop:'Cedar',arr:'2025-12-01',dep:'2025-12-05',nights:4,amt:674.15,apd:168.54,guest:'Taya4',yr:2025,mo:12},{prop:'Camino',arr:'2025-12-01',dep:'2025-12-05',nights:4,amt:674.15,apd:168.54,guest:'Taya4',yr:2025,mo:12},{prop:'Sonoro',arr:'2025-12-01',dep:'2025-12-20',nights:19,amt:2469.9,apd:129.99,guest:'Efren7',yr:2025,mo:12},{prop:'Cedar',arr:'2025-12-07',dep:'2025-12-12',nights:5,amt:808.98,apd:161.8,guest:'Taya4',yr:2025,mo:12},{prop:'Camino',arr:'2025-12-07',dep:'2025-12-12',nights:5,amt:808.98,apd:161.8,guest:'Taya4',yr:2025,mo:12},{prop:'Sonoro',arr:'2025-12-20',dep:'2025-12-21',nights:1,amt:269.66,apd:269.66,guest:'Elizabeth8',yr:2025,mo:12},{prop:'Hayes',arr:'2025-12-12',dep:'2025-12-14',nights:2,amt:414.19,apd:207.09,guest:'Karina7',yr:2025,mo:12},{prop:'Cedar',arr:'2025-12-12',dep:'2025-12-14',nights:2,amt:404.49,apd:202.25,guest:'Jannette5',yr:2025,mo:12},{prop:'Camino',arr:'2025-12-12',dep:'2025-12-14',nights:2,amt:377.33,apd:188.66,guest:'Marita6',yr:2025,mo:12},{prop:'Sonoro',arr:'2025-12-21',dep:'2025-12-28',nights:7,amt:963.87,apd:137.7,guest:'Fawn3',yr:2025,mo:12},{prop:'Cedar',arr:'2025-12-14',dep:'2025-12-19',nights:5,amt:808.98,apd:161.8,guest:'Taya4',yr:2025,mo:12},{prop:'Camino',arr:'2025-12-14',dep:'2025-12-19',nights:5,amt:808.98,apd:161.8,guest:'Taya4',yr:2025,mo:12},{prop:'Sonoro',arr:'2025-12-28',dep:'2026-01-01',nights:4,amt:537.53,apd:134.38,guest:'Sonia4',yr:2025,mo:12},{prop:'Hayes',arr:'2025-12-20',dep:'2025-12-22',nights:2,amt:460.75,apd:230.38,guest:'Catherine9',yr:2025,mo:12},{prop:'Camino',arr:'2025-12-19',dep:'2025-12-21',nights:2,amt:423.89,apd:211.94,guest:'Chris8',yr:2025,mo:12},{prop:'Hayes',arr:'2025-12-23',dep:'2025-12-29',nights:6,amt:975.82,apd:162.64,guest:'Kim2',yr:2025,mo:12},{prop:'Cedar',arr:'2025-12-28',dep:'2025-12-30',nights:2,amt:539.32,apd:269.66,guest:'Edward8',yr:2025,mo:12},{prop:'Camino',arr:'2025-12-22',dep:'2025-12-26',nights:4,amt:804.13,apd:201.03,guest:'Jason8',yr:2025,mo:12},{prop:'Hayes',arr:'2023-11-18',dep:'2023-11-20',nights:2,amt:256.47,apd:128.24,guest:'Denise',yr:2023,mo:11},{prop:'Hayes',arr:'2023-11-20',dep:'2023-11-22',nights:2,amt:231.25,apd:115.62,guest:'Joe',yr:2023,mo:11},{prop:'Hayes',arr:'2023-11-22',dep:'2023-11-24',nights:2,amt:407.79,apd:203.9,guest:'Minerva',yr:2023,mo:11},{prop:'Hayes',arr:'2023-12-05',dep:'2023-12-15',nights:10,amt:630.31,apd:63.03,guest:'Melissa',yr:2023,mo:12},{prop:'Hayes',arr:'2023-12-05',dep:'2023-12-15',nights:10,amt:1157.02,apd:115.7,guest:'Melissa',yr:2023,mo:12},{prop:'Hayes',arr:'2023-12-17',dep:'2023-12-23',nights:6,amt:636.13,apd:106.02,guest:'Glenda',yr:2023,mo:12},{prop:'Hayes',arr:'2023-12-23',dep:'2023-12-28',nights:5,amt:1008.8,apd:201.76,guest:'Dewayne',yr:2023,mo:12},{prop:'Hayes',arr:'2023-12-28',dep:'2023-12-30',nights:2,amt:296.33,apd:148.16,guest:'VICTOR',yr:2023,mo:12},{prop:'Hayes',arr:'2023-12-30',dep:'2024-01-01',nights:2,amt:273.28,apd:136.64,guest:'Larry',yr:2023,mo:12},{prop:'Hayes',arr:'2024-01-01',dep:'2024-01-12',nights:11,amt:1503.01,apd:136.64,guest:'Larry',yr:2024,mo:1},{prop:'Hayes',arr:'2024-01-13',dep:'2024-01-14',nights:1,amt:236.68,apd:236.68,guest:'Natalie',yr:2024,mo:1},{prop:'Hayes',arr:'2024-01-15',dep:'2024-01-20',nights:5,amt:668.33,apd:133.67,guest:'Trisha',yr:2024,mo:1},{prop:'Hayes',arr:'2024-01-20',dep:'2024-01-22',nights:2,amt:405.0,apd:202.5,guest:'Jessica',yr:2024,mo:1},{prop:'Hayes',arr:'2024-01-22',dep:'2024-01-26',nights:4,amt:644.08,apd:161.02,guest:'ERIKA',yr:2024,mo:1},{prop:'Hayes',arr:'2024-01-26',dep:'2024-01-28',nights:2,amt:396.73,apd:198.37,guest:'SUSAN',yr:2024,mo:1},{prop:'Hayes',arr:'2024-01-28',dep:'2024-01-31',nights:3,amt:451.05,apd:150.35,guest:'Jeff',yr:2024,mo:1},{prop:'Hayes',arr:'2024-02-01',dep:'2024-02-04',nights:3,amt:492.76,apd:164.25,guest:'ALMA',yr:2024,mo:2},{prop:'Hayes',arr:'2024-02-05',dep:'2024-02-08',nights:3,amt:666.39,apd:222.13,guest:'JUDY',yr:2024,mo:2},{prop:'Hayes',arr:'2024-02-17',dep:'2024-03-01',nights:13,amt:1955.97,apd:150.46,guest:'Laurel',yr:2024,mo:2},{prop:'Hayes',arr:'2024-03-01',dep:'2024-03-17',nights:16,amt:2406.7,apd:150.42,guest:'Laurel',yr:2024,mo:3},{prop:'Cedar',arr:'2024-03-16',dep:'2024-03-17',nights:1,amt:145.5,apd:145.5,guest:'Peggy',yr:2024,mo:3},{prop:'Hayes',arr:'2024-03-17',dep:'2024-03-19',nights:2,amt:491.79,apd:245.9,guest:'Peggy',yr:2024,mo:3},{prop:'Cedar',arr:'2024-03-18',dep:'2024-03-22',nights:4,amt:657.66,apd:164.41,guest:'Josh',yr:2024,mo:3},{prop:'Hayes',arr:'2024-03-19',dep:'2024-03-22',nights:3,amt:498.58,apd:166.19,guest:'Bianca',yr:2024,mo:3},{prop:'Cedar',arr:'2024-03-23',dep:'2024-03-29',nights:6,amt:838.08,apd:139.68,guest:'Christopher',yr:2024,mo:3},{prop:'Hayes',arr:'2024-03-22',dep:'2024-03-24',nights:2,amt:538.35,apd:269.18,guest:'Todd',yr:2024,mo:3},{prop:'Cedar',arr:'2024-03-30',dep:'2024-04-01',nights:2,amt:353.08,apd:176.54,guest:'Juan',yr:2024,mo:3},{prop:'Hayes',arr:'2024-03-28',dep:'2024-04-01',nights:4,amt:887.55,apd:221.89,guest:'Soyoung',yr:2024,mo:3},{prop:'Hayes',arr:'2024-04-05',dep:'2024-04-07',nights:2,amt:431.65,apd:215.82,guest:'Guillermo',yr:2024,mo:4},{prop:'Cedar',arr:'2024-04-02',dep:'2024-04-05',nights:3,amt:468.51,apd:156.17,guest:'Juanita',yr:2024,mo:4},{prop:'Hayes',arr:'2024-04-09',dep:'2024-04-19',nights:10,amt:1461.13,apd:146.11,guest:'Aj',yr:2024,mo:4},{prop:'Cedar',arr:'2024-04-05',dep:'2024-04-08',nights:3,amt:501.49,apd:167.16,guest:'Kathleen',yr:2024,mo:4},{prop:'Hayes',arr:'2024-04-20',dep:'2024-04-21',nights:1,amt:255.11,apd:255.11,guest:'Saeed',yr:2024,mo:4},{prop:'Cedar',arr:'2024-04-08',dep:'2024-04-12',nights:4,amt:657.66,apd:164.41,guest:'Juan',yr:2024,mo:4},{prop:'Hayes',arr:'2024-04-21',dep:'2024-04-26',nights:5,amt:742.05,apd:148.41,guest:'Chris',yr:2024,mo:4},{prop:'Cedar',arr:'2024-04-14',dep:'2024-04-19',nights:5,amt:761.45,apd:152.29,guest:'Joseph',yr:2024,mo:4},{prop:'Hayes',arr:'2024-04-27',dep:'2024-04-30',nights:3,amt:505.37,apd:168.46,guest:'L Murray',yr:2024,mo:4},{prop:'Cedar',arr:'2024-04-19',dep:'2024-04-21',nights:2,amt:424.86,apd:212.43,guest:'Martha',yr:2024,mo:4},{prop:'Cedar',arr:'2024-04-21',dep:'2024-04-28',nights:7,amt:1020.4,apd:145.77,guest:'Danny',yr:2024,mo:4},{prop:'Cedar',arr:'2024-04-28',dep:'2024-04-30',nights:2,amt:386.06,apd:193.03,guest:'Benita',yr:2024,mo:4},{prop:'Hayes',arr:'2024-05-01',dep:'2024-05-02',nights:1,amt:241.53,apd:241.53,guest:'Michael',yr:2024,mo:5},{prop:'Cedar',arr:'2024-05-03',dep:'2024-05-05',nights:2,amt:374.42,apd:187.21,guest:'Tamee',yr:2024,mo:5},{prop:'Hayes',arr:'2024-05-03',dep:'2024-05-05',nights:2,amt:397.7,apd:198.85,guest:'Alyssa',yr:2024,mo:5},{prop:'Cedar',arr:'2024-05-06',dep:'2024-05-10',nights:4,amt:665.42,apd:166.35,guest:'Jose',yr:2024,mo:5},{prop:'Hayes',arr:'2024-05-05',dep:'2024-05-07',nights:2,amt:366.66,apd:183.33,guest:'Lauren',yr:2024,mo:5},{prop:'Cedar',arr:'2024-05-11',dep:'2024-05-13',nights:2,amt:414.19,apd:207.09,guest:'Crystal',yr:2024,mo:5},{prop:'Hayes',arr:'2024-05-07',dep:'2024-06-01',nights:25,amt:3039.5,apd:121.58,guest:'Rosa',yr:2024,mo:5},{prop:'Cedar',arr:'2024-05-15',dep:'2024-05-18',nights:3,amt:504.4,apd:168.13,guest:'Rene',yr:2024,mo:5},{prop:'Cedar',arr:'2024-05-18',dep:'2024-05-19',nights:1,amt:264.81,apd:264.81,guest:'Anthony',yr:2024,mo:5},{prop:'Cedar',arr:'2024-05-20',dep:'2024-05-22',nights:2,amt:398.67,apd:199.34,guest:'Julie',yr:2024,mo:5},{prop:'Cedar',arr:'2024-05-22',dep:'2024-05-26',nights:4,amt:866.21,apd:216.55,guest:'Stephen',yr:2024,mo:5},{prop:'Hayes',arr:'2024-06-01',dep:'2024-07-01',nights:30,amt:3647.4,apd:121.58,guest:'Rosa',yr:2024,mo:6},{prop:'Cedar',arr:'2024-06-02',dep:'2024-07-01',nights:29,amt:3240.46,apd:111.74,guest:'Nicole',yr:2024,mo:6},{prop:'Hayes',arr:'2024-07-01',dep:'2024-08-01',nights:31,amt:3768.98,apd:121.58,guest:'Rosa',yr:2024,mo:7},{prop:'Cedar',arr:'2024-07-01',dep:'2024-08-01',nights:31,amt:3463.94,apd:111.74,guest:'Nicole',yr:2024,mo:7},{prop:'Camino',arr:'2024-07-10',dep:'2024-07-11',nights:1,amt:130.0,apd:130.0,guest:'Matt',yr:2024,mo:7},{prop:'Camino',arr:'2024-07-13',dep:'2024-07-14',nights:1,amt:265.78,apd:265.78,guest:'Linda',yr:2024,mo:7},{prop:'Camino',arr:'2024-07-14',dep:'2024-07-18',nights:4,amt:714.89,apd:178.72,guest:'John',yr:2024,mo:7},{prop:'Camino',arr:'2024-07-19',dep:'2024-07-28',nights:9,amt:1232.84,apd:136.98,guest:'Jose',yr:2024,mo:7},{prop:'Camino',arr:'2024-07-29',dep:'2024-08-02',nights:4,amt:665.42,apd:166.35,guest:'Zach',yr:2024,mo:7},{prop:'Hayes',arr:'2024-08-01',dep:'2024-08-15',nights:14,amt:1702.12,apd:121.58,guest:'Rosa',yr:2024,mo:8},{prop:'Cedar',arr:'2024-08-01',dep:'2024-08-10',nights:9,amt:1005.65,apd:111.74,guest:'Nicole',yr:2024,mo:8},{prop:'Camino',arr:'2024-08-02',dep:'2024-08-05',nights:3,amt:559.69,apd:186.56,guest:'Yolanda',yr:2024,mo:8},{prop:'Hayes',arr:'2024-08-15',dep:'2024-08-16',nights:1,amt:279.36,apd:279.36,guest:'Rosa',yr:2024,mo:8},{prop:'Cedar',arr:'2024-08-12',dep:'2024-08-15',nights:3,amt:527.68,apd:175.89,guest:'Larry',yr:2024,mo:8},{prop:'Camino',arr:'2024-08-05',dep:'2024-08-09',nights:4,amt:743.02,apd:185.75,guest:'Jose',yr:2024,mo:8},{prop:'Hayes',arr:'2024-08-19',dep:'2024-08-23',nights:4,amt:719.95,apd:179.99,guest:'Jordy',yr:2024,mo:8},{prop:'Cedar',arr:'2024-08-15',dep:'2024-08-21',nights:6,amt:1274.08,apd:212.35,guest:'Gentry',yr:2024,mo:8},{prop:'Camino',arr:'2024-08-09',dep:'2024-08-23',nights:14,amt:2177.36,apd:155.53,guest:'Allo',yr:2024,mo:8},{prop:'Hayes',arr:'2024-08-23',dep:'2024-08-25',nights:2,amt:443.29,apd:221.65,guest:'Diana',yr:2024,mo:8},{prop:'Hayes',arr:'2024-08-28',dep:'2024-09-01',nights:4,amt:605.88,apd:151.47,guest:'Allo',yr:2024,mo:8},{prop:'Cedar',arr:'2024-08-30',dep:'2024-09-01',nights:2,amt:458.81,apd:229.41,guest:'Shannon',yr:2024,mo:8},{prop:'Hayes',arr:'2024-09-01',dep:'2024-09-20',nights:19,amt:2877.55,apd:151.45,guest:'Allo',yr:2024,mo:9},{prop:'Cedar',arr:'2024-09-01',dep:'2024-10-01',nights:30,amt:4456.79,apd:148.56,guest:'Terri',yr:2024,mo:9},{prop:'Camino',arr:'2024-09-05',dep:'2024-09-08',nights:3,amt:566.48,apd:188.83,guest:'Kim',yr:2024,mo:9},{prop:'Hayes',arr:'2024-09-24',dep:'2024-09-27',nights:3,amt:510.22,apd:170.07,guest:'Zusana',yr:2024,mo:9},{prop:'Camino',arr:'2024-09-11',dep:'2024-09-17',nights:6,amt:1063.12,apd:177.19,guest:'Mustafa',yr:2024,mo:9},{prop:'Hayes',arr:'2024-09-27',dep:'2024-09-29',nights:2,amt:455.9,apd:227.95,guest:'Jannifer',yr:2024,mo:9},{prop:'Camino',arr:'2024-09-17',dep:'2024-09-19',nights:2,amt:376.36,apd:188.18,guest:'James',yr:2024,mo:9},{prop:'Camino',arr:'2024-09-20',dep:'2024-09-23',nights:3,amt:647.96,apd:215.99,guest:'Alicia',yr:2024,mo:9},{prop:'Camino',arr:'2024-09-23',dep:'2024-09-26',nights:3,amt:501.49,apd:167.16,guest:'Lysette',yr:2024,mo:9},{prop:'Camino',arr:'2024-09-27',dep:'2024-09-30',nights:3,amt:623.71,apd:207.9,guest:'Jannifer',yr:2024,mo:9},{prop:'Hayes',arr:'2024-09-30',dep:'2024-10-04',nights:4,amt:728.47,apd:182.12,guest:'haili',yr:2024,mo:9},{prop:'Cedar',arr:'2024-10-03',dep:'2024-10-08',nights:5,amt:924.41,apd:184.88,guest:'Julie',yr:2024,mo:10},{prop:'Camino',arr:'2024-09-30',dep:'2024-10-04',nights:4,amt:743.02,apd:185.75,guest:'Maria',yr:2024,mo:9},{prop:'Hayes',arr:'2024-10-04',dep:'2024-10-11',nights:7,amt:1080.0,apd:154.29,guest:'Jibran',yr:2024,mo:10},{prop:'Cedar',arr:'2024-10-08',dep:'2024-10-14',nights:6,amt:996.19,apd:166.03,guest:'Keith',yr:2024,mo:10},{prop:'Hayes',arr:'2024-10-12',dep:'2024-10-14',nights:2,amt:457.84,apd:228.92,guest:'Noah',yr:2024,mo:10},{prop:'Cedar',arr:'2024-10-14',dep:'2024-10-18',nights:4,amt:635.35,apd:158.84,guest:'Dan',yr:2024,mo:10},{prop:'Camino',arr:'2024-10-10',dep:'2024-10-21',nights:11,amt:1805.98,apd:164.18,guest:'Mustapa',yr:2024,mo:10},{prop:'Hayes',arr:'2024-10-18',dep:'2024-10-20',nights:2,amt:498.58,apd:249.29,guest:'Allen',yr:2024,mo:10},{prop:'Cedar',arr:'2024-10-18',dep:'2024-10-20',nights:2,amt:487.91,apd:243.96,guest:'Alex',yr:2024,mo:10},{prop:'Hayes',arr:'2024-10-26',dep:'2024-11-01',nights:6,amt:873.97,apd:145.66,guest:'Lionel',yr:2024,mo:10},{prop:'Cedar',arr:'2024-10-20',dep:'2024-10-27',nights:7,amt:1162.87,apd:166.12,guest:'Devin',yr:2024,mo:10},{prop:'Camino',arr:'2024-10-23',dep:'2024-10-30',nights:7,amt:906.46,apd:129.49,guest:'Vicki',yr:2024,mo:10},{prop:'Cedar',arr:'2024-10-27',dep:'2024-11-01',nights:5,amt:752.25,apd:150.45,guest:'Taya',yr:2024,mo:10},{prop:'Camino',arr:'2024-10-31',dep:'2024-11-01',nights:1,amt:155.69,apd:155.69,guest:'Dimitry',yr:2024,mo:10},{prop:'Hayes',arr:'2024-11-01',dep:'2024-11-03',nights:2,amt:371.51,apd:185.75,guest:'Jeff',yr:2024,mo:11},{prop:'Cedar',arr:'2024-11-01',dep:'2024-11-17',nights:16,amt:2407.2,apd:150.45,guest:'Taya',yr:2024,mo:11},{prop:'Camino',arr:'2024-11-01',dep:'2024-11-04',nights:3,amt:467.05,apd:155.68,guest:'Dimitry',yr:2024,mo:11},{prop:'Hayes',arr:'2024-11-07',dep:'2024-11-27',nights:20,amt:2527.63,apd:126.38,guest:'Allo',yr:2024,mo:11},{prop:'Cedar',arr:'2024-11-18',dep:'2024-11-21',nights:3,amt:510.22,apd:170.07,guest:'Corey',yr:2024,mo:11},{prop:'Camino',arr:'2024-11-08',dep:'2024-11-10',nights:2,amt:442.32,apd:221.16,guest:'Nathan',yr:2024,mo:11},{prop:'Hayes',arr:'2024-11-27',dep:'2024-11-30',nights:3,amt:756.6,apd:252.2,guest:'Erin',yr:2024,mo:11},{prop:'Cedar',arr:'2024-11-21',dep:'2024-11-24',nights:3,amt:597.52,apd:199.17,guest:'Lloyd',yr:2024,mo:11},{prop:'Camino',arr:'2024-11-11',dep:'2024-11-18',nights:7,amt:1108.52,apd:158.36,guest:'Chad',yr:2024,mo:11},{prop:'Cedar',arr:'2024-11-25',dep:'2024-11-30',nights:5,amt:1201.83,apd:240.37,guest:'Robin',yr:2024,mo:11},{prop:'Camino',arr:'2024-11-18',dep:'2024-11-21',nights:3,amt:559.69,apd:186.56,guest:'Billie',yr:2024,mo:11},{prop:'Camino',arr:'2024-11-22',dep:'2024-11-24',nights:2,amt:483.06,apd:241.53,guest:'Debbie',yr:2024,mo:11},{prop:'Camino',arr:'2024-11-24',dep:'2024-11-29',nights:5,amt:1024.41,apd:204.88,guest:'Mary',yr:2024,mo:11},{prop:'Camino',arr:'2024-11-29',dep:'2024-12-01',nights:2,amt:539.32,apd:269.66,guest:'Lori',yr:2024,mo:11},{prop:'Hayes',arr:'2024-12-06',dep:'2024-12-08',nights:2,amt:440.38,apd:220.19,guest:'Steph',yr:2024,mo:12},{prop:'Cedar',arr:'2024-12-03',dep:'2024-12-20',nights:17,amt:2493.56,apd:146.68,guest:'Taya3',yr:2024,mo:12},{prop:'Camino',arr:'2024-12-03',dep:'2024-12-20',nights:17,amt:2425.23,apd:142.66,guest:'Robert',yr:2024,mo:12},{prop:'Hayes',arr:'2024-12-14',dep:'2024-12-16',nights:2,amt:423.89,apd:211.94,guest:'Marcela',yr:2024,mo:12},{prop:'Cedar',arr:'2024-12-20',dep:'2024-12-22',nights:2,amt:495.67,apd:247.84,guest:'Kim8',yr:2024,mo:12},{prop:'Camino',arr:'2024-12-20',dep:'2024-12-27',nights:7,amt:1641.16,apd:234.45,guest:'Jeanne3',yr:2024,mo:12},{prop:'Cedar',arr:'2024-12-23',dep:'2024-12-27',nights:4,amt:783.76,apd:195.94,guest:'Jennifer3',yr:2024,mo:12},{prop:'Cedar',arr:'2024-12-29',dep:'2024-12-31',nights:2,amt:561.63,apd:280.81,guest:'Eric7',yr:2024,mo:12},{prop:'Camino',arr:'2024-12-29',dep:'2025-01-01',nights:3,amt:786.75,apd:262.25,guest:'Maria8',yr:2024,mo:12},{prop:'Hayes',arr:'2024-12-21',dep:'2024-12-26',nights:5,amt:958.36,apd:191.67,guest:'Leigh5',yr:2024,mo:12},{prop:'Hayes',arr:'2024-12-27',dep:'2024-12-31',nights:4,amt:764.36,apd:191.09,guest:'Kristi6',yr:2024,mo:12},{prop:'Hayes',arr:'2026-04-25',dep:'2026-05-01',nights:6,amt:946.47,apd:157.75,guest:'Todd2',yr:2026,mo:4}];
+
+
+const PROPS = ['Hayes','Cedar','Camino','Sonoro','San Juan'];
+const COLORS = {
+  Hayes: '#4f8ef7', Cedar: '#34d399', Camino: '#fb923c',
+  Sonoro: '#fbbf24', 'San Juan': '#f472b6'
+};
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTHS_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+let selYear = '2026', selMonth = 'all', selProp = 'all';
+let sortKey = 'arr', sortDir = 1;
+let occChartObj = null;
+
+document.getElementById('selYear').onchange = e => { selYear = e.target.value; update(); };
+document.getElementById('selMonth').onchange = e => { selMonth = e.target.value; update(); };
+document.getElementById('selProp').onchange = e => { selProp = e.target.value; update(); };
+
+document.getElementById('lastUpdate').textContent = 'Updated: ' + new Date().toLocaleDateString('ko-KR');
+
+function filtered() {
+  return DATA.filter(b => {
+    if (selYear !== 'all' && b.yr !== +selYear) return false;
+    if (selMonth !== 'all' && b.mo !== +selMonth) return false;
+    if (selProp !== 'all' && b.prop !== selProp) return false;
+    return true;
+  });
+}
+
+function fmt(n) { return '$' + n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function fmtK(n) {
+  if (n >= 1000) return '$' + (n/1000).toFixed(1) + 'k';
+  return '$' + Math.round(n);
+}
+function fmtKd(n) {
+  if (n >= 1000) return '$' + (n/1000).toFixed(1) + 'k';
+  return '$' + Math.round(n);
+}
+
+function renderHero() {
+  const f = filtered();
+  const total = f.reduce((s,b) => s+b.amt, 0);
+
+  // YoY comparison
+  let prevYear = selYear === 'all' ? null : String(+selYear - 1);
+  let prevData = prevYear ? DATA.filter(b => {
+    if (b.yr !== +prevYear) return false;
+    if (selMonth !== 'all' && b.mo !== +selMonth) return false;
+    if (selProp !== 'all' && b.prop !== selProp) return false;
+    return true;
+  }) : [];
+  const prevTotal = prevData.reduce((s,b) => s+b.amt, 0);
+  
+  const yoyPct = prevTotal > 0 ? ((total - prevTotal) / prevTotal * 100) : null;
+
+  function badge(pct) {
+    if (pct === null) return '';
+    const cls = pct > 0 ? 'badge-up' : pct < 0 ? 'badge-down' : 'badge-flat';
+    const sym = pct > 0 ? '▲' : pct < 0 ? '▼' : '≈';
+    return `<span class="kpi-badge ${cls}">${sym} ${Math.abs(pct).toFixed(1)}% YoY</span>`;
+  }
+
+  document.getElementById('heroGrid').innerHTML = `
+    <div class="kpi-card dark" style="--accent-color:#8b7fff">
+      <div class="kpi-label">Total Revenue</div>
+      <div class="kpi-value">${fmt(total)}</div>
+      <div class="kpi-sub">${badge(yoyPct)}</div>
+    </div>`;
+}
+
+function renderScorecards() {
+  // Compute per-property for current year filter
+  const yearData = selYear === 'all' ? DATA : DATA.filter(b => b.yr === +selYear);
+  const monthData = selMonth === 'all' ? yearData : yearData.filter(b => b.mo === +selMonth);
+  const propTotals = {};
+  PROPS.forEach(p => { propTotals[p] = { amt:0, cnt:0, nights:0 }; });
+  monthData.forEach(b => {
+    if (propTotals[b.prop]) {
+      propTotals[b.prop].amt += b.amt;
+      propTotals[b.prop].cnt += 1;
+      propTotals[b.prop].nights += b.nights;
+    }
+  });
+  const maxAmt = Math.max(...PROPS.map(p => propTotals[p].amt)) || 1;
+
+  document.getElementById('scorecards').innerHTML = PROPS.map(p => {
+    const d = propTotals[p];
+    const pct = (d.amt / maxAmt * 100).toFixed(0);
+    const isActive = selProp === p;
+    return `<div class="sc-card ${isActive ? 'active' : ''}" style="--prop-color:${COLORS[p]}" onclick="toggleProp('${p}')">
+      <div class="sc-prop" style="color:${COLORS[p]}">${p}</div>
+      <div class="sc-amt">${d.amt > 0 ? fmt(d.amt) : '—'}</div>
+      <div class="sc-meta">${d.cnt} bookings · ${d.nights} nights</div>
+      <div class="sc-bar"><div class="sc-bar-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function toggleProp(p) {
+  selProp = selProp === p ? 'all' : p;
+  document.getElementById('selProp').value = selProp;
+  update();
+}
+
+// ── Calendar ─────────────────────────────
+let calYear = new Date().getFullYear();
+
+function calScrollToday() {
+  // Scroll to today's position
+  const todayEl = document.querySelector('.cal-today-marker');
+  if (todayEl) {
+    const wrap = document.getElementById('calGridWrap');
+    const wrapRect = wrap.getBoundingClientRect();
+    const elRect = todayEl.getBoundingClientRect();
+    wrap.scrollLeft += elRect.left - wrapRect.left - wrapRect.width / 2 + CELL_PX * 3;
+  }
+}
+
+function mergeLinkedBookings(bookings, prop) {
+  // Sort by arrival date
+  const sorted = [...bookings].sort((a,b) => a.arr.localeCompare(b.arr));
+  const merged = [];
+  const used = new Set();
+
+  sorted.forEach((b, i) => {
+    if (used.has(i)) return;
+    // Extract base name (strip trailing digits)
+    const baseName = b.guest.replace(/\d+$/, '').toLowerCase().trim();
+    if (!baseName) { merged.push({...b, _origArr: b.arr, _origDep: b.dep}); return; }
+
+    // Find all segments with same base name that chain (dep of one = arr of next)
+    let chain = [b];
+    used.add(i);
+
+    let searching = true;
+    while (searching) {
+      searching = false;
+      const lastDep = chain[chain.length-1].dep;
+      for (let j = 0; j < sorted.length; j++) {
+        if (used.has(j)) continue;
+        const c = sorted[j];
+        const cBase = c.guest.replace(/\d+$/, '').toLowerCase().trim();
+        if (cBase === baseName && c.arr === lastDep) {
+          chain.push(c);
+          used.add(j);
+          searching = true;
+          break;
+        }
+      }
+    }
+
+    if (chain.length === 1) {
+      merged.push({...b, _origArr: b.arr, _origDep: b.dep, _merged: false});
+    } else {
+      // Merge chain into one booking
+      const totalAmt = chain.reduce((s,c) => s+c.amt, 0);
+      const totalNights = chain.reduce((s,c) => s+c.nights, 0);
+      merged.push({
+        ...chain[0],
+        dep: chain[chain.length-1].dep,
+        nights: totalNights,
+        amt: Math.round(totalAmt * 100) / 100,
+        apd: Math.round(totalAmt / totalNights * 100) / 100,
+        _origArr: chain[0].arr,
+        _origDep: chain[chain.length-1].dep,
+        _merged: true,
+        _segments: chain.length,
+      });
+    }
+  });
+  return merged;
+}
+
+const CELL_PX = 36; // px per day cell
+
+function renderCalendar() {
+  const DAY_NAMES = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0,10);
+  const propsToShow = selProp === 'all' ? PROPS : [selProp];
+
+  // Determine year range to show: use selYear, or all years
+  const years = selYear === 'all' ? [2024, 2025, 2026] : [+selYear];
+  const PROP_COL = 110;
+
+  // Pre-merge all bookings per prop (full dataset for linking across months)
+  const mergedByProp = {};
+  PROPS.forEach(prop => {
+    const propBookings = DATA.filter(b => b.prop === prop);
+    mergedByProp[prop] = mergeLinkedBookings(propBookings, prop);
+  });
+
+  let headerHtml = '';
+  let rowsHtml   = '';
+  let totalCols  = 0;
+  let monthDividers = []; // {left, label} for month separators
+
+  // Build column map: each day = one column
+  // We'll build month-by-month for the selected year(s)
+  const monthRanges = []; // {year, month, startCol, days}
+  years.forEach(yr => {
+    for (let mo = 0; mo < 12; mo++) {
+      // If month filter active and not matching, skip that month
+      if (selMonth !== 'all' && +selMonth !== mo + 1) {
+        // Still need to track columns for skipped months? No — just skip entirely
+        // Actually skip to keep it clean
+        return;
+      }
+      const days = new Date(yr, mo + 1, 0).getDate();
+      monthRanges.push({ year: yr, month: mo, startCol: totalCols, days });
+      totalCols += days;
+    }
+  });
+
+  if (monthRanges.length === 0) {
+    document.getElementById('calGrid').innerHTML = '<div style="padding:32px;color:var(--text-dim);text-align:center;">No data for selected filters</div>';
+    return;
+  }
+
+  const totalGridW = PROP_COL + totalCols * CELL_PX;
+
+  // ── Header: month labels row ──
+  let monthLabelRow = `<div style="display:flex;position:sticky;top:0;z-index:8;background:var(--surface);border-bottom:1px solid var(--border);box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+    <div style="width:${PROP_COL}px;flex-shrink:0;border-right:1px solid var(--border);"></div>
+    <div style="display:flex;flex:1;position:relative;">`;
+
+  monthRanges.forEach(mr => {
+    const w = mr.days * CELL_PX;
+    const label = MONTHS_FULL[mr.month] + (years.length > 1 ? ' ' + mr.year : '');
+    monthLabelRow += `<div style="width:${w}px;flex-shrink:0;padding:5px 8px;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-mid);border-right:1px solid rgba(255,255,255,0.08);white-space:nowrap;overflow:hidden;">${label}</div>`;
+  });
+  monthLabelRow += '</div></div>';
+
+  // ── Header: day numbers row ──
+  let dayRow = `<div style="display:flex;position:sticky;top:28px;z-index:7;background:var(--surface2);border-bottom:1px solid var(--border);box-shadow:0 2px 4px rgba(0,0,0,0.04);">
+    <div style="width:${PROP_COL}px;flex-shrink:0;padding:4px 8px;font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;border-right:1px solid var(--border);display:flex;align-items:center;">Property</div>
+    <div style="display:flex;">`;
+
+  monthRanges.forEach(mr => {
+    for (let d = 1; d <= mr.days; d++) {
+      const date = new Date(mr.year, mr.month, d);
+      const dow  = date.getDay();
+      const dateStr = `${mr.year}-${String(mr.month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isToday   = dateStr === todayStr;
+      const isWeekend = dow === 0 || dow === 6;
+      const isMo1     = d === 1; // first of month
+      dayRow += `<div class="${isToday ? 'cal-today-marker' : ''}" style="width:${CELL_PX}px;flex-shrink:0;text-align:center;padding:3px 0;border-left:${isMo1 ? '2px solid rgba(255,255,255,0.15)' : '1px solid rgba(255,255,255,0.04)'};${isWeekend?'background:rgba(255,255,255,0.015)':''}${isToday?';background:rgba(124,106,255,0.08)':''}">
+        <div style="font-size:8px;color:${isWeekend?'rgba(251,146,60,0.55)':'var(--text-dim)'};">${DAY_NAMES[dow]}</div>
+        <div style="font-size:11px;font-family:'DM Mono',monospace;${isToday?'display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:var(--accent);color:#fff;border-radius:50%;font-weight:700;font-size:10px;':''}">${d}</div>
+      </div>`;
+    }
+  });
+  dayRow += '</div></div>';
+
+  headerHtml = monthLabelRow + dayRow;
+
+  // ── Property rows ──
+  let totalVisible = 0;
+
+  propsToShow.forEach(prop => {
+    const mergedBookings = mergedByProp[prop];
+
+    // Build background cells
+    let cellsHtml = '';
+    monthRanges.forEach(mr => {
+      for (let d = 1; d <= mr.days; d++) {
+        const date    = new Date(mr.year, mr.month, d);
+        const dateStr = `${mr.year}-${String(mr.month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const dow     = date.getDay();
+        const isToday   = dateStr === todayStr;
+        const isWeekend = dow === 0 || dow === 6;
+        const isMo1     = d === 1;
+        cellsHtml += `<div style="width:${CELL_PX}px;flex-shrink:0;height:100%;border-left:${isMo1?'2px solid rgba(255,255,255,0.12)':'1px solid rgba(255,255,255,0.04)'};${isToday?'background:rgba(124,106,255,0.06);':isWeekend?'background:rgba(255,255,255,0.012);':''}"></div>`;
+      }
+    });
+
+    // Build booking bars — calculate pixel offset from totalCols start
+    let barsHtml = '';
+
+    // Calendar range
+    const calStart = new Date(monthRanges[0].year, monthRanges[0].month, 1);
+    const lastMr   = monthRanges[monthRanges.length - 1];
+    const calEnd   = new Date(lastMr.year, lastMr.month + 1, 1); // exclusive
+
+    mergedBookings.forEach(b => {
+      if (selMonth !== 'all' && +selMonth !== b.mo) return; // only if no month filter spans
+      const arrDate = new Date(b.arr);
+      const depDate = new Date(b.dep);
+
+      // Clamp to calendar range
+      const visStart = arrDate < calStart ? calStart : arrDate;
+      const visEnd   = depDate > calEnd   ? calEnd   : depDate;
+      const spanDays = (visEnd - visStart) / 86400000;
+      if (spanDays <= 0) return;
+
+      // Calculate leftPx: days from calStart to visStart
+      const leftDays = (visStart - calStart) / 86400000;
+      const leftPx   = leftDays * CELL_PX;
+      const widthPx  = Math.max(spanDays * CELL_PX - 2, 4);
+
+      const isStart = arrDate >= calStart;
+      const isEnd   = depDate <= calEnd;
+      const col     = COLORS[prop];
+      const guestName  = b.guest.replace(/\d+$/, '');
+      const mergeTag   = b._merged ? ` <span style="background:rgba(255,255,255,0.25);border-radius:8px;padding:0 4px;font-size:8px;">×${b._segments}</span>` : '';
+      const amtDisplay = fmt(b.amt);
+
+      totalVisible++;
+      // Store booking data as JSON in data attributes — no inline JS args
+      const bData = JSON.stringify({
+        guest: guestName,
+        arr: b._origArr||b.arr,
+        dep: b._origDep||b.dep,
+        amt: amtDisplay,
+        nights: b.nights,
+        merged: b._merged||false
+      });
+      const labelText = guestName + '  ' + amtDisplay;
+      const estLabelPx = labelText.length * 6.5 + 16;
+      const showAmt  = widthPx >= estLabelPx;
+      const showName = widthPx >= 22;
+      const mergeSpan = b._merged ? `<span class="bk-merge">×${b._segments}</span>` : '';
+      const barW = Math.max(widthPx, 6);
+      barsHtml += `<div class="cal-booking"
+        data-bk='${bData.replace(/'/g,"&#39;")}'
+        style="left:${leftPx}px;width:${barW}px;background:${col};z-index:5;
+               border-radius:${isStart?'5px':'2px'} ${isEnd?'5px':'2px'} ${isEnd?'5px':'2px'} ${isStart?'5px':'2px'};">
+        ${showName ? `<span class="bk-label">
+          <span class="bk-guest">${guestName}</span>${mergeSpan}
+          ${showAmt ? `<span class="bk-amt">${amtDisplay}</span>` : ''}
+        </span>` : ''}
+      </div>`;
+    });
+
+    rowsHtml += `<div style="display:flex;width:${totalGridW}px;border-bottom:1px solid rgba(255,255,255,0.04);min-height:58px;">
+      <div style="width:${PROP_COL}px;flex-shrink:0;padding:8px 10px;display:flex;align-items:center;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;border-right:1px solid var(--border);color:${COLORS[prop]};position:sticky;left:0;background:var(--surface);z-index:3;box-shadow:2px 0 6px rgba(0,0,0,0.06);">${prop}</div>
+      <div style="position:relative;display:flex;width:${totalCols * CELL_PX}px;flex-shrink:0;overflow:visible;">
+        ${cellsHtml}
+        <div style="position:absolute;inset:0;pointer-events:none;overflow:visible;">${barsHtml}</div>
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('calGrid').innerHTML =
+    `<div style="width:${totalGridW}px;">${headerHtml}${rowsHtml}</div>`;
+
+  // Update toolbar label
+  const label = selYear === 'all' ? '2024 – 2026' : selYear;
+  document.getElementById('calMonthLabel').textContent = label;
+  document.getElementById('calInfo').textContent = totalVisible + ' bookings';
+
+  // Auto-scroll to today on initial render
+  if (selYear === 'all' || +selYear === today.getFullYear()) {
+    setTimeout(() => {
+      const todayMarker = document.querySelector('.cal-today-marker');
+      const wrap = document.getElementById('calGridWrap');
+      if (todayMarker && wrap) {
+        const markerLeft = todayMarker.offsetLeft - PROP_COL;
+        wrap.scrollLeft = Math.max(0, markerLeft - wrap.clientWidth / 2 + CELL_PX * 3);
+      }
+    }, 50);
+  }
+}
+
+// ── Booking Tooltip (event delegation) ──────────────
+let _activeTipEl = null;
+let _tipHideTimer = null;
+let _mouseOnTip   = false;
+
+function _positionTip(tip, rect) {
+  const margin = 10, tipW = 260;
+  let left = rect.left;
+  let top  = rect.bottom + 10;
+  if (left + tipW > window.innerWidth - margin) left = window.innerWidth - tipW - margin;
+  if (left < margin) left = margin;
+  if (top + 160 > window.innerHeight - margin) top = rect.top - 160 - 10;
+  tip.style.left = left + 'px';
+  tip.style.top  = top + 'px';
+}
+
+function _buildTip(d) {
+  const nl = d.nights === 1 ? '1박' : d.nights + '박';
+  const apd = d.nights > 0 ? '$' + (parseFloat(d.amt.replace(/[$,]/g,'')) / d.nights).toFixed(0) + '/박' : '';
+  return `<div class="tip-name">${d.guest}${d.merged ? '<span class="tip-tag">연결 예약</span>' : ''}</div>
+    <div class="tip-row"><span>입실</span><span>${d.arr}</span></div>
+    <div class="tip-row"><span>퇴실</span><span>${d.dep}</span></div>
+    <div class="tip-row"><span>숙박</span><span>${nl}</span></div>
+    <div class="tip-row"><span>일 평균</span><span>${apd}</span></div>
+    <div class="tip-amt">${d.amt}</div>`;
+}
+
+function _showTip(el, rect) {
+  clearTimeout(_tipHideTimer);
+  const d = JSON.parse(el.dataset.bk);
+  let tip = document.getElementById('bk-tooltip');
+  if (!tip) {
+    tip = document.createElement('div');
+    tip.id = 'bk-tooltip';
+    document.body.appendChild(tip);
+  }
+  tip.innerHTML = _buildTip(d);
+  tip.style.opacity = '1';
+  tip.style.transition = '';
+  _positionTip(tip, rect);
+  if (_activeTipEl && _activeTipEl !== el) _activeTipEl.classList.remove('tip-active');
+  _activeTipEl = el;
+  el.classList.add('tip-active');
+}
+
+function _hideTip(instant) {
+  clearTimeout(_tipHideTimer);
+  _tipHideTimer = setTimeout(() => {
+    if (_mouseOnTip) return; // keep open if mouse is on tooltip
+    const tip = document.getElementById('bk-tooltip');
+    if (tip) { tip.style.transition = 'opacity 0.15s'; tip.style.opacity = '0'; setTimeout(() => tip && tip.remove(), 160); }
+    if (_activeTipEl) { _activeTipEl.classList.remove('tip-active'); _activeTipEl = null; }
+  }, instant ? 0 : 150);
+}
+
+// Single event delegation on document
+document.addEventListener('mouseover', e => {
+  const bk = e.target.closest('.cal-booking');
+  if (bk && bk.dataset.bk) _showTip(bk, bk.getBoundingClientRect());
+});
+document.addEventListener('mouseout', e => {
+  const bk = e.target.closest('.cal-booking');
+  if (bk) { clearTimeout(_tipHideTimer); _tipHideTimer = setTimeout(() => { if (!_mouseOnTip) _hideTip(); }, 150); }
+});
+
+// Keep tooltip open when mouse moves over it
+document.addEventListener('mouseover', e => { if (e.target.closest('#bk-tooltip')) { _mouseOnTip = true; clearTimeout(_tipHideTimer); }});
+document.addEventListener('mouseout',  e => { if (e.target.closest('#bk-tooltip')) { _mouseOnTip = false; _hideTip(); }});
+
+// Click: toggle on desktop, always show on mobile touch
+document.addEventListener('click', e => {
+  const bk = e.target.closest('.cal-booking');
+  if (!bk || !bk.dataset.bk) {
+    if (!e.target.closest('#bk-tooltip')) _hideTip(true); // click outside = close
+    return;
+  }
+  e.stopPropagation();
+  if (_activeTipEl === bk && document.getElementById('bk-tooltip')) {
+    _hideTip(true); // toggle off
+  } else {
+    _showTip(bk, bk.getBoundingClientRect());
+  }
+});
+
+// Touch: tap to show, tap elsewhere to hide
+document.addEventListener('touchend', e => {
+  const bk = e.target.closest('.cal-booking');
+  if (bk && bk.dataset.bk) {
+    e.preventDefault();
+    if (_activeTipEl === bk && document.getElementById('bk-tooltip')) {
+      _hideTip(true);
+    } else {
+      _showTip(bk, bk.getBoundingClientRect());
+    }
+  } else if (!e.target.closest('#bk-tooltip')) {
+    _hideTip(true);
+  }
+}, {passive: false});
+
+// Close on scroll
+document.getElementById('calGridWrap') && document.getElementById('calGridWrap').addEventListener('scroll', () => _hideTip(true), {passive:true});
+
+function renderOccupancy() {
+  if (selProp === 'all') {
+    document.getElementById('occCard').classList.add('hidden');
+    return;
+  }
+  document.getElementById('occCard').classList.remove('hidden');
+  document.getElementById('occTitle').textContent = `${selProp} — Occupancy Rate`;
+
+  const years = [2024, 2025, 2026];
+  const moFilter = selMonth !== 'all' ? +selMonth : null;
+  const colors = ['#7c6aff','#4f8ef7','#34d399'];
+
+  // Stats per year
+  const statsHtml = years.map((yr,i) => {
+    let totalNights = 0, totalAvail = 0;
+    for (let mo = 1; mo <= 12; mo++) {
+      if (moFilter && mo !== moFilter) continue;
+      const avail = new Date(yr, mo, 0).getDate();
+      totalAvail += avail;
+      const booked = DATA.filter(b => b.yr===yr && b.mo===mo && b.prop===selProp).reduce((s,b)=>s+b.nights,0);
+      totalNights += Math.min(booked, avail);
+    }
+    const pct = totalAvail > 0 ? (totalNights/totalAvail*100) : 0;
+    return `<div class="occ-stat">
+      <div class="occ-stat-yr" style="color:${colors[i]}">${yr}</div>
+      <div class="occ-stat-pct" style="color:${colors[i]}">${pct.toFixed(1)}%</div>
+      <div class="occ-stat-sub">${totalNights} / ${totalAvail} nights</div>
+    </div>`;
+  }).join('');
+  document.getElementById('occStats').innerHTML = statsHtml;
+
+  // Line chart: monthly occupancy per year
+  const ctx = document.getElementById('occChart').getContext('2d');
+  if (occChartObj) { occChartObj.destroy(); occChartObj = null; }
+
+  const datasets = years.map((yr,i) => ({
+    label: String(yr),
+    data: MONTHS.map((_,mi) => {
+      const mo = mi+1;
+      const avail = new Date(yr, mo, 0).getDate();
+      const booked = DATA.filter(b=>b.yr===yr&&b.mo===mo&&b.prop===selProp).reduce((s,b)=>s+b.nights,0);
+      return avail > 0 ? Math.min(booked,avail)/avail*100 : 0;
+    }),
+    borderColor: colors[i], backgroundColor: colors[i]+'22',
+    tension: 0.3, fill: false, pointRadius: 4,
+    pointBackgroundColor: moFilter ? MONTHS.map((_,mi) => mi+1===moFilter ? colors[i] : 'transparent') : colors[i],
+    pointRadius: moFilter ? MONTHS.map((_,mi) => mi+1===moFilter ? 7 : 3) : 4,
+  }));
+
+  occChartObj = new Chart(ctx, {
+    type: 'line',
+    data: { labels: MONTHS, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color:'#999ab8', font:{size:11} } }, tooltip: { callbacks: { label: c => c.dataset.label+': '+c.raw.toFixed(1)+'%' } } },
+      scales: {
+        x: { ticks: { color:'#666680', font:{size:11} }, grid: { color:'rgba(255,255,255,0.05)' } },
+        y: { min:0, max:100, ticks: { color:'#666680', font:{size:11}, callback: v=>v+'%' }, grid: { color:'rgba(255,255,255,0.05)' } }
+      }
+    }
+  });
+}
+
+function renderTable() {
+  if (selProp === 'all') {
+    document.getElementById('tableCard').classList.add('hidden');
+    return;
+  }
+  document.getElementById('tableCard').classList.remove('hidden');
+  document.getElementById('tableTitle').textContent = `${selProp} — Booking Details`;
+
+  let rows = filtered().slice();
+  rows.sort((a,b) => {
+    let va = a[sortKey], vb = b[sortKey];
+    if (typeof va === 'string') { va = va.toLowerCase(); vb = vb.toLowerCase(); }
+    return va < vb ? -sortDir : va > vb ? sortDir : 0;
+  });
+
+  const thead = document.querySelectorAll('thead th');
+  thead.forEach(th => { th.className = ''; });
+  const keyMap = ['arr','dep','nights','amt','apd','guest'];
+  const idx = keyMap.indexOf(sortKey);
+  if (idx >= 0) thead[idx].className = sortDir === 1 ? 'sort-asc' : 'sort-desc';
+
+  document.getElementById('tableBody').innerHTML = rows.map(b => `
+    <tr>
+      <td>${b.arr}</td>
+      <td>${b.dep}</td>
+      <td>${b.nights}</td>
+      <td class="td-amt">${fmt(b.amt)}</td>
+      <td class="td-amt">${fmt(b.apd)}</td>
+      <td>${b.guest}</td>
+    </tr>`).join('');
+}
+
+function sortTable(key) {
+  if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = 1; }
+  renderTable();
+}
+
+function update() {
+  renderHero();
+  renderScorecards();
+  renderCalendar();
+  renderOccupancy();
+  renderTable();
+}
+
+// Split Calculator
+function openSplit() { document.getElementById('modalOverlay').classList.add('open'); }
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); document.getElementById('calcResult').style.display='none'; }
+
+function parseMMDD(str) {
+  const clean = str.trim().replace(/[-\.]/g,'/');
+  const parts = clean.split('/');
+  if (parts.length < 2) return null;
+  const mo = parseInt(parts[0]), day = parseInt(parts[1]);
+  if (isNaN(mo)||isNaN(day)||mo<1||mo>12||day<1||day>31) return null;
+  return { mo, day };
+}
+
+function calcSplit() {
+  const arrStr = document.getElementById('inArrival').value;
+  const depStr = document.getElementById('inDepart').value;
+  const total = parseFloat(document.getElementById('inAmount').value);
+
+  const arr = parseMMDD(arrStr), dep = parseMMDD(depStr);
+  if (!arr || !dep) { alert('날짜 형식을 확인해주세요 (예: 3/25)'); return; }
+  if (isNaN(total) || total <= 0) { alert('금액을 입력해주세요'); return; }
+
+  const REF = 2025;
+  let a = new Date(REF, arr.mo-1, arr.day);
+  let d = new Date(REF, dep.mo-1, dep.day);
+  if (d <= a) { d = new Date(REF+1, dep.mo-1, dep.day); }
+  const totalNights = (d - a) / 86400000;
+  if (totalNights <= 0) { alert('퇴실일이 입실일보다 늦어야 합니다'); return; }
+
+  const segments = [];
+  let cur = new Date(a);
+  while (cur < d) {
+    const mo = cur.getMonth()+1, yr = cur.getFullYear();
+    const monthEnd = new Date(yr, mo, 1);
+    const segEnd = monthEnd < d ? monthEnd : d;
+    const nights = (segEnd - cur) / 86400000;
+    if (nights > 0) segments.push({ mo, nights });
+    cur = segEnd;
+  }
+
+  let html = '';
+  let remaining = total;
+  segments.forEach((seg, i) => {
+    const isLast = i === segments.length - 1;
+    const share = isLast ? remaining : Math.round(total * seg.nights / totalNights * 100) / 100;
+    remaining -= share;
+    html += `<div class="modal-result-row">
+      <span>${MONTHS_FULL[seg.mo-1]} (${seg.nights}박)</span>
+      <span style="font-family:'DM Mono',monospace;color:#e8e8f0">${fmt(share)}</span>
+    </div>`;
+  });
+  html += `<div class="modal-result-row" style="border-top:1px solid rgba(255,255,255,0.1);margin-top:4px;padding-top:8px">
+    <span style="font-weight:600">합계 (${totalNights}박)</span>
+    <span style="font-family:'DM Mono',monospace;font-weight:600">${fmt(total)}</span>
+  </div>`;
+
+  const resultEl = document.getElementById('calcResult');
+  resultEl.innerHTML = html;
+  resultEl.style.display = 'block';
+}
+
+update();
+
+// Drag-to-scroll: only when dragged > 4px (distinguish from click)
+(function() {
+  let isDown = false, startX, scrollLeft, moved = false;
+  const wrap = document.getElementById('calGridWrap');
+  if (!wrap) return;
+  wrap.addEventListener('mousedown', e => {
+    if (e.target.closest('.cal-booking')) return; // let booking handle it
+    isDown = true; moved = false;
+    startX = e.pageX - wrap.offsetLeft;
+    scrollLeft = wrap.scrollLeft;
+    wrap.style.userSelect = 'none';
+  });
+  document.addEventListener('mouseup', () => { isDown = false; wrap.style.userSelect = ''; });
+  wrap.addEventListener('mousemove', e => {
+    if (!isDown) return;
+    const x = e.pageX - wrap.offsetLeft;
+    const dx = x - startX;
+    if (Math.abs(dx) > 4) { moved = true; wrap.scrollLeft = scrollLeft - dx; }
+  });
+})();
+</script>
+</body>
+</html>
