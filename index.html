@@ -180,16 +180,23 @@ select:hover { border-color: var(--accent); }
 .cal-bookings-layer { position: absolute; inset: 0; pointer-events: none; }
 .cal-booking {
   position: absolute; top: 6px; bottom: 6px;
-  border-radius: 6px; display: flex; align-items: center; overflow: hidden;
+  border-radius: 6px; display: flex; align-items: center; overflow: visible;
   padding: 0 8px; cursor: pointer; pointer-events: all;
   transition: filter 0.15s, transform 0.15s, box-shadow 0.15s;
   white-space: nowrap; font-size: 11px; font-weight: 500;
   -webkit-tap-highlight-color: transparent;
 }
-.cal-booking:hover { filter: brightness(1.18); transform: scaleY(1.06); z-index: 10; box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
-.cal-booking.tip-active { filter: brightness(1.25); transform: scaleY(1.08); z-index: 11; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
-.cal-booking .bk-guest { color: #fff; margin-right: 6px; }
-.cal-booking .bk-amt { color: rgba(255,255,255,0.85); font-family: 'DM Mono', monospace; font-size: 10px; }
+.cal-booking:hover { filter: brightness(1.18); transform: scaleY(1.06); z-index: 20; box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
+.cal-booking.tip-active { filter: brightness(1.25); transform: scaleY(1.08); z-index: 21; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+/* Floating label sits outside the bar when bar is narrow */
+.cal-booking .bk-label {
+  display: flex; align-items: center; gap: 5px;
+  position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+  white-space: nowrap; pointer-events: none; z-index: 2;
+}
+.cal-booking .bk-guest { color: #fff; font-weight: 600; font-size: 11px; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+.cal-booking .bk-amt { color: rgba(255,255,255,0.9); font-family: 'DM Mono', monospace; font-size: 10px; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+.cal-booking .bk-merge { background: rgba(255,255,255,0.28); border-radius: 8px; padding: 0 4px; font-size: 8px; color: #fff; }
 .cal-booking .bk-status { margin-left: auto; font-size: 9px; background: rgba(255,255,255,0.2); padding: 1px 6px; border-radius: 10px; }
 /* Tooltip */
 #bk-tooltip {
@@ -208,9 +215,6 @@ select:hover { border-color: var(--accent); }
 #bk-tooltip .tip-tag { display: inline-block; font-size: 10px; background: rgba(124,106,255,0.2); color: var(--accent); border-radius: 20px; padding: 2px 8px; margin-left: 6px; vertical-align: middle; }
 
 /* CHARTS */
-.charts-row { display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px; }
-.chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
-.chart-wrap { position: relative; height: 260px; }
 
 /* OCCUPANCY */
 .occupancy-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
@@ -274,6 +278,57 @@ tbody td:first-child { color: var(--text); font-family: 'DM Mono', monospace; fo
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+/* ── Mobile Responsive ───────────────────── */
+@media (max-width: 768px) {
+  .header { padding: 16px 16px 14px; }
+  .logo { font-size: 24px; }
+  .controls { padding: 10px 16px; gap: 8px; }
+  .controls .ctrl-group { gap: 6px; }
+  .ctrl-label { display: none; }
+  select { font-size: 12px; padding: 6px 22px 6px 8px; }
+  .btn-split { padding: 7px 12px; font-size: 12px; }
+  .main { padding: 14px 12px; gap: 14px; }
+
+  /* KPI Cards: 2×2 grid on mobile */
+  .hero-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .kpi-card { padding: 14px; }
+  .kpi-label { font-size: 10px; letter-spacing: 1px; margin-bottom: 5px; }
+  .kpi-value { font-size: 26px; }
+  .kpi-badge { font-size: 10px; padding: 2px 6px; }
+  .kpi-sparkline { height: 24px; margin-top: 8px; }
+
+  /* Scorecards: 2-3 per row */
+  .scorecards { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .sc-card { padding: 10px; }
+  .sc-prop { font-size: 9px; letter-spacing: 0.5px; margin-bottom: 5px; }
+  .sc-amt { font-size: 16px; }
+  .sc-meta { font-size: 9px; }
+
+  /* Calendar toolbar */
+  .cal-toolbar { padding: 10px 14px; gap: 8px; }
+  .cal-month-label { font-size: 18px; }
+  .cal-info { font-size: 10px; }
+
+  /* Occupancy */
+  .occ-stats { grid-template-columns: repeat(3,1fr); gap: 8px; }
+  .occ-stat-pct { font-size: 22px; }
+  .occ-chart-wrap { height: 180px; }
+
+  /* Table */
+  .table-wrap { font-size: 12px; }
+  tbody td { padding: 7px 8px; }
+  thead th { padding: 8px 8px; font-size: 10px; }
+}
+
+@media (max-width: 480px) {
+  /* Scorecards: 2 per row on very small screens */
+  .scorecards { grid-template-columns: repeat(2, 1fr); }
+  .sc-meta { display: none; }
+
+  /* KPI still 2×2 */
+  .kpi-value { font-size: 22px; }
+}
 </style>
 </head>
 <body>
@@ -338,17 +393,7 @@ tbody td:first-child { color: var(--text); font-family: 'DM Mono', monospace; fo
       <div id="calGrid"></div>
     </div>
   </div>
-  <!-- Charts -->
-  <div class="charts-row">
-    <div class="chart-card">
-      <div class="section-title" id="chartTitle">Monthly Revenue</div>
-      <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="section-title">Revenue by Property</div>
-      <div class="chart-wrap"><canvas id="donutChart"></canvas></div>
-    </div>
-  </div>
+
   <!-- Occupancy (shown when specific property selected) -->
   <div class="occupancy-card hidden" id="occCard">
     <div class="section-title" id="occTitle">Occupancy Rate</div>
@@ -414,7 +459,7 @@ const MONTHS_FULL = ['January','February','March','April','May','June','July','A
 
 let selYear = '2026', selMonth = 'all', selProp = 'all';
 let sortKey = 'arr', sortDir = 1;
-let mainChartObj = null, donutChartObj = null, occChartObj = null;
+let occChartObj = null;
 
 document.getElementById('selYear').onchange = e => { selYear = e.target.value; update(); };
 document.getElementById('selMonth').onchange = e => { selMonth = e.target.value; update(); };
@@ -736,23 +781,31 @@ function renderCalendar() {
 
       totalVisible++;
       const tipArgs = `${JSON.stringify(guestName)},${JSON.stringify(b._origArr||b.arr)},${JSON.stringify(b._origDep||b.dep)},${JSON.stringify(amtDisplay)},${b.nights},${b._merged||false}`;
+      // Estimate label width to decide display mode
+      const labelText = guestName + '  ' + amtDisplay;
+      const estLabelPx = labelText.length * 6.5 + 16;
+      const showAmt = widthPx >= estLabelPx;
+      const showName = widthPx >= 30;
+      const mergeSpan = b._merged ? `<span class="bk-merge">×${b._segments}</span>` : '';
       barsHtml += `<div class="cal-booking"
-        style="left:${leftPx}px;width:${widthPx}px;background:${col};
+        style="left:${leftPx}px;width:${widthPx}px;background:${col};z-index:5;
                border-radius:${isStart?'5px':'2px'} ${isEnd?'5px':'2px'} ${isEnd?'5px':'2px'} ${isStart?'5px':'2px'};"
         onmouseenter="showBookingTip(this,${tipArgs})"
         onmouseleave="hideBookingTip()"
         ontouchstart="event.preventDefault();event.stopPropagation();toggleBookingTip(this,${tipArgs})"
         onclick="event.stopPropagation()">
-        <span class="bk-guest">${guestName}</span>${mergeTag}
-        <span class="bk-amt" style="margin-left:5px">${amtDisplay}</span>
+        <span class="bk-label">
+          ${showName ? `<span class="bk-guest">${guestName}</span>${mergeSpan}` : ''}
+          ${showAmt  ? `<span class="bk-amt">${amtDisplay}</span>` : ''}
+        </span>
       </div>`;
     });
 
-    rowsHtml += `<div style="display:flex;width:${totalGridW}px;border-bottom:1px solid rgba(255,255,255,0.04);min-height:52px;">
+    rowsHtml += `<div style="display:flex;width:${totalGridW}px;border-bottom:1px solid rgba(255,255,255,0.04);min-height:58px;">
       <div style="width:${PROP_COL}px;flex-shrink:0;padding:8px 10px;display:flex;align-items:center;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;border-right:1px solid var(--border);color:${COLORS[prop]};position:sticky;left:0;background:var(--surface);z-index:3;">${prop}</div>
-      <div style="position:relative;display:flex;width:${totalCols * CELL_PX}px;flex-shrink:0;">
+      <div style="position:relative;display:flex;width:${totalCols * CELL_PX}px;flex-shrink:0;overflow:visible;">
         ${cellsHtml}
-        <div style="position:absolute;inset:0;pointer-events:none;">${barsHtml}</div>
+        <div style="position:absolute;inset:0;pointer-events:none;overflow:visible;">${barsHtml}</div>
       </div>
     </div>`;
   });
@@ -852,79 +905,6 @@ function toggleBookingTip(el, guest, arr, dep, amt, nights, isMerged) {
 
 // Close tip on scroll
 document.addEventListener('scroll', hideBookingTip, {passive:true});
-
-function renderMainChart() {
-  const ctx = document.getElementById('mainChart').getContext('2d');
-  if (mainChartObj) { mainChartObj.destroy(); mainChartObj = null; }
-
-  const f = filtered();
-  let datasets, labels, type;
-
-  if (selMonth !== 'all' && selProp === 'all') {
-    // Specific month: property comparison by year
-    document.getElementById('chartTitle').textContent = MONTHS_FULL[+selMonth-1] + ' — Property Comparison';
-    const years = ['2024','2025','2026'];
-    labels = PROPS;
-    type = 'bar';
-    datasets = years.map(yr => ({
-      label: yr,
-      data: PROPS.map(p => {
-        const d = DATA.filter(b => b.yr===+yr && b.mo===+selMonth && b.prop===p);
-        return d.reduce((s,b)=>s+b.amt,0);
-      }),
-      backgroundColor: yr==='2024'?'rgba(124,106,255,0.6)':yr==='2025'?'rgba(79,142,247,0.6)':'rgba(52,211,153,0.6)',
-      borderRadius: 4,
-    }));
-  } else {
-    // Monthly bars by property
-    document.getElementById('chartTitle').textContent = 'Monthly Revenue' + (selProp!=='all'?' — '+selProp:'');
-    labels = MONTHS;
-    type = 'bar';
-    const propsToShow = selProp === 'all' ? PROPS : [selProp];
-    datasets = propsToShow.map(p => ({
-      label: p,
-      data: MONTHS.map((_,mi) => {
-        return f.filter(b => b.prop===p && b.mo===mi+1).reduce((s,b)=>s+b.amt,0);
-      }),
-      backgroundColor: COLORS[p] + 'aa',
-      borderColor: COLORS[p],
-      borderWidth: 1,
-      borderRadius: 4,
-      stack: 'stack',
-    }));
-  }
-
-  mainChartObj = new Chart(ctx, {
-    type,
-    data: { labels, datasets },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: '#999ab8', font: { size: 11 } } }, tooltip: { callbacks: { label: c => c.dataset.label + ': ' + fmt(c.raw) } } },
-      scales: {
-        x: { ticks: { color: '#666680', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
-        y: { ticks: { color: '#666680', font: { size: 11 }, callback: v => fmtK(v) }, grid: { color: 'rgba(255,255,255,0.05)' } }
-      }
-    }
-  });
-}
-
-function renderDonut() {
-  const ctx = document.getElementById('donutChart').getContext('2d');
-  if (donutChartObj) { donutChartObj.destroy(); donutChartObj = null; }
-  const f = filtered();
-  const totals = PROPS.map(p => f.filter(b=>b.prop===p).reduce((s,b)=>s+b.amt,0));
-  donutChartObj = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: PROPS,
-      datasets: [{ data: totals, backgroundColor: PROPS.map(p=>COLORS[p]+'cc'), borderColor: '#12121a', borderWidth: 2, hoverOffset: 6 }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false, cutout: '65%',
-      plugins: { legend: { position:'bottom', labels: { color:'#999ab8', font:{size:11}, padding:12 } }, tooltip: { callbacks: { label: c => c.label+': '+fmt(c.raw) } } }
-    }
-  });
-}
 
 function renderOccupancy() {
   if (selProp === 'all') {
@@ -1030,8 +1010,6 @@ function update() {
   renderHero();
   renderScorecards();
   renderCalendar();
-  renderMainChart();
-  renderDonut();
   renderOccupancy();
   renderTable();
 }
