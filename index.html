@@ -182,13 +182,30 @@ select:hover { border-color: var(--accent); }
   position: absolute; top: 6px; bottom: 6px;
   border-radius: 6px; display: flex; align-items: center; overflow: hidden;
   padding: 0 8px; cursor: pointer; pointer-events: all;
-  transition: filter 0.15s, transform 0.15s;
+  transition: filter 0.15s, transform 0.15s, box-shadow 0.15s;
   white-space: nowrap; font-size: 11px; font-weight: 500;
+  -webkit-tap-highlight-color: transparent;
 }
-.cal-booking:hover { filter: brightness(1.15); transform: scaleY(1.05); z-index: 10; }
+.cal-booking:hover { filter: brightness(1.18); transform: scaleY(1.06); z-index: 10; box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
+.cal-booking.tip-active { filter: brightness(1.25); transform: scaleY(1.08); z-index: 11; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
 .cal-booking .bk-guest { color: #fff; margin-right: 6px; }
 .cal-booking .bk-amt { color: rgba(255,255,255,0.85); font-family: 'DM Mono', monospace; font-size: 10px; }
 .cal-booking .bk-status { margin-left: auto; font-size: 9px; background: rgba(255,255,255,0.2); padding: 1px 6px; border-radius: 10px; }
+/* Tooltip */
+#bk-tooltip {
+  position: fixed; z-index: 9999;
+  background: #1a1a2e; border: 1px solid rgba(124,106,255,0.5);
+  border-radius: 12px; padding: 14px 18px;
+  font-size: 13px; box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  pointer-events: none; max-width: 260px;
+  animation: tipIn 0.15s ease;
+}
+@keyframes tipIn { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform: translateY(0); } }
+#bk-tooltip .tip-name { font-weight: 700; font-size: 14px; margin-bottom: 8px; }
+#bk-tooltip .tip-row { display: flex; justify-content: space-between; gap: 16px; padding: 3px 0; font-size: 12px; color: var(--text-dim); }
+#bk-tooltip .tip-row span:last-child { color: var(--text); font-family: 'DM Mono', monospace; }
+#bk-tooltip .tip-amt { font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: #34d399; margin-top: 8px; letter-spacing: 1px; }
+#bk-tooltip .tip-tag { display: inline-block; font-size: 10px; background: rgba(124,106,255,0.2); color: var(--accent); border-radius: 20px; padding: 2px 8px; margin-left: 6px; vertical-align: middle; }
 
 /* CHARTS */
 .charts-row { display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px; }
@@ -718,10 +735,14 @@ function renderCalendar() {
       const amtDisplay = fmt(b.amt);
 
       totalVisible++;
+      const tipArgs = `${JSON.stringify(guestName)},${JSON.stringify(b._origArr||b.arr)},${JSON.stringify(b._origDep||b.dep)},${JSON.stringify(amtDisplay)},${b.nights},${b._merged||false}`;
       barsHtml += `<div class="cal-booking"
         style="left:${leftPx}px;width:${widthPx}px;background:${col};
                border-radius:${isStart?'5px':'2px'} ${isEnd?'5px':'2px'} ${isEnd?'5px':'2px'} ${isStart?'5px':'2px'};"
-        onclick="event.stopPropagation();showBookingTip(this,${JSON.stringify(guestName)},${JSON.stringify(b._origArr||b.arr)},${JSON.stringify(b._origDep||b.dep)},${JSON.stringify(amtDisplay)},${b.nights},${b._merged||false})">
+        onmouseenter="showBookingTip(this,${tipArgs})"
+        onmouseleave="hideBookingTip()"
+        ontouchstart="event.preventDefault();event.stopPropagation();toggleBookingTip(this,${tipArgs})"
+        onclick="event.stopPropagation()">
         <span class="bk-guest">${guestName}</span>${mergeTag}
         <span class="bk-amt" style="margin-left:5px">${amtDisplay}</span>
       </div>`;
@@ -757,22 +778,80 @@ function renderCalendar() {
   }
 }
 
+let _tipHideTimer = null;
+let _activeTipEl = null;
+
+function positionTip(tip, rect) {
+  const margin = 12;
+  const tipW = 260, tipH = 140;
+  let left = rect.left;
+  let top  = rect.bottom + 8;
+  // Keep within viewport
+  if (left + tipW > window.innerWidth - margin) left = window.innerWidth - tipW - margin;
+  if (left < margin) left = margin;
+  if (top + tipH > window.innerHeight - margin) top = rect.top - tipH - 8;
+  tip.style.left = left + 'px';
+  tip.style.top  = top + 'px';
+}
+
+function buildTipHtml(guest, arr, dep, amt, nights, isMerged) {
+  const nights_label = nights === 1 ? '1박' : nights + '박';
+  const apd = nights > 0 ? '$' + (parseFloat(amt.replace(/[$,]/g,'')) / nights).toFixed(0) + '/박' : '';
+  return `
+    <div class="tip-name">${guest}${isMerged ? '<span class="tip-tag">연결 예약</span>' : ''}</div>
+    <div class="tip-row"><span>입실</span><span>${arr}</span></div>
+    <div class="tip-row"><span>퇴실</span><span>${dep}</span></div>
+    <div class="tip-row"><span>숙박</span><span>${nights_label}</span></div>
+    <div class="tip-row"><span>일 평균</span><span>${apd}</span></div>
+    <div class="tip-amt">${amt}</div>`;
+}
+
 function showBookingTip(el, guest, arr, dep, amt, nights, isMerged) {
+  clearTimeout(_tipHideTimer);
+
+  // Remove old, mark active
   const old = document.getElementById('bk-tooltip');
   if (old) old.remove();
+  if (_activeTipEl) _activeTipEl.classList.remove('tip-active');
+  _activeTipEl = el;
+  el.classList.add('tip-active');
+
   const tip = document.createElement('div');
   tip.id = 'bk-tooltip';
-  tip.style.cssText = 'position:fixed;z-index:9999;background:#1e1e30;border:1px solid rgba(124,106,255,0.4);border-radius:10px;padding:12px 16px;font-size:12px;box-shadow:0 8px 32px rgba(0,0,0,0.5);pointer-events:none;max-width:240px;';
-  tip.innerHTML = `<div style="font-weight:600;margin-bottom:6px">${guest}${isMerged?' <span style="font-size:10px;color:var(--accent);">(연결 예약)</span>':''}</div>
-    <div style="color:var(--text-dim);font-size:11px">${arr} → ${dep}</div>
-    <div style="color:var(--text-dim);font-size:11px">${nights}박 합산</div>
-    <div style="font-family:'DM Mono',monospace;margin-top:6px;color:#34d399;font-size:14px">${amt}</div>`;
+  tip.innerHTML = buildTipHtml(guest, arr, dep, amt, nights, isMerged);
   document.body.appendChild(tip);
-  const rect = el.getBoundingClientRect();
-  tip.style.left = Math.min(rect.left, window.innerWidth - 260) + 'px';
-  tip.style.top  = (rect.bottom + 8) + 'px';
-  setTimeout(() => { document.addEventListener('click', () => tip.remove(), {once:true}); }, 10);
+  positionTip(tip, el.getBoundingClientRect());
 }
+
+function hideBookingTip() {
+  _tipHideTimer = setTimeout(() => {
+    const tip = document.getElementById('bk-tooltip');
+    if (tip) { tip.style.opacity = '0'; tip.style.transition = 'opacity 0.15s'; setTimeout(() => tip.remove(), 150); }
+    if (_activeTipEl) { _activeTipEl.classList.remove('tip-active'); _activeTipEl = null; }
+  }, 120);
+}
+
+function toggleBookingTip(el, guest, arr, dep, amt, nights, isMerged) {
+  // Touch: toggle tip open/close
+  const existing = document.getElementById('bk-tooltip');
+  if (existing && _activeTipEl === el) {
+    hideBookingTip();
+    return;
+  }
+  showBookingTip(el, guest, arr, dep, amt, nights, isMerged);
+  // Auto-close on outside touch
+  setTimeout(() => {
+    document.addEventListener('touchstart', function closeTip(e) {
+      if (!e.target.closest('.cal-booking')) {
+        hideBookingTip();
+        document.removeEventListener('touchstart', closeTip);
+      }
+    });
+  }, 50);
+}
+
+// Close tip on scroll
+document.addEventListener('scroll', hideBookingTip, {passive:true});
 
 function renderMainChart() {
   const ctx = document.getElementById('mainChart').getContext('2d');
