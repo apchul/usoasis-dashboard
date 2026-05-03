@@ -13,7 +13,7 @@ pasted
 Claude responded: 이전 대화 내용 잘 확인했어요!
 이전 대화 내용 잘 확인했어요! 요약하면:
 
-USOASIS 대시보드 (4개 → 5개 매장: Hayes, Cedar, Camino, Sonoro, San Juan)
+USOASIS 대시보드 (4개 -> 5개 매장: Hayes, Cedar, Camino, Sonoro, San Juan)
 Google Sheets에서 데이터 읽어와서 HTML 대시보드로 만들기
 필터(연도/월/매장), Hero KPI 카드, 히트맵, 가동율 차트, 예약 상세 테이블, 매출분할계산 기능 포함
 최신 데이터: 2026년 $77,668 / 87건
