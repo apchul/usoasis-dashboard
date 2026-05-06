@@ -375,19 +375,25 @@ tbody td:first-child { color: var(--text); font-family: 'DM Mono', monospace; fo
       <option value="all">All Years</option>
       <option value="2024">2024</option>
       <option value="2025">2025</option>
-      <option value="2026" selected>2026</option>
+      <option value="2026">2026</option>
     </select>
   </div>
   <div class="ctrl-group">
     <span class="ctrl-label">Month</span>
     <select id="selMonth">
       <option value="all">All Months</option>
-      <option value="1">January</option><option value="2">February</option>
-      <option value="3">March</option><option value="4">April</option>
-      <option value="5">May</option><option value="6">June</option>
-      <option value="7">July</option><option value="8">August</option>
-      <option value="9">September</option><option value="10">October</option>
-      <option value="11">November</option><option value="12">December</option>
+      <option value="1">January</option>
+      <option value="2">February</option>
+      <option value="3">March</option>
+      <option value="4">April</option>
+      <option value="5">May</option>
+      <option value="6">June</option>
+      <option value="7">July</option>
+      <option value="8">August</option>
+      <option value="9">September</option>
+      <option value="10">October</option>
+      <option value="11">November</option>
+      <option value="12">December</option>
     </select>
   </div>
   <div class="ctrl-group">
@@ -484,25 +490,23 @@ const COLORS = {
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MONTHS_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-// Initialize with current year and month
+// Always use browser's current date at runtime
 const _now = new Date();
 const _curYear = String(_now.getFullYear());
-const _curMonth = String(_now.getMonth() + 1);
+const _curMonth = String(_now.getMonth() + 1); // 1~12
 let selYear = _curYear, selMonth = _curMonth, selProp = 'all';
 let sortKey = 'arr', sortDir = 1;
 let occChartObj = null;
 
-document.getElementById('selYear').onchange = e => { selYear = e.target.value; // Set dropdowns to current year/month on load
+document.getElementById('selYear').onchange = e => { selYear = e.target.value; // Set dropdowns to current year/month at runtime
 (function() {
   const yrSel = document.getElementById('selYear');
   const moSel = document.getElementById('selMonth');
-  // Set year
   for (let i = 0; i < yrSel.options.length; i++) {
-    if (yrSel.options[i].value === selYear) { yrSel.selectedIndex = i; break; }
+    yrSel.options[i].selected = (yrSel.options[i].value === _curYear);
   }
-  // Set month
   for (let i = 0; i < moSel.options.length; i++) {
-    if (moSel.options[i].value === selMonth) { moSel.selectedIndex = i; break; }
+    moSel.options[i].selected = (moSel.options[i].value === _curMonth);
   }
 })();
 update(); };
