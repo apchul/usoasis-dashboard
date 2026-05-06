@@ -498,7 +498,11 @@ let selYear = _curYear, selMonth = _curMonth, selProp = 'all';
 let sortKey = 'arr', sortDir = 1;
 let occChartObj = null;
 
-document.getElementById('selYear').onchange = e => { selYear = e.target.value; // Set dropdowns to current year/month at runtime
+document.getElementById('selYear').onchange = e => { selYear = e.target.value; update(); };
+document.getElementById('selMonth').onchange = e => { selMonth = e.target.value; update(); };
+document.getElementById('selProp').onchange = e => { selProp = e.target.value; update(); };
+
+// Set dropdowns to current year/month at page load
 (function() {
   const yrSel = document.getElementById('selYear');
   const moSel = document.getElementById('selMonth');
@@ -509,9 +513,6 @@ document.getElementById('selYear').onchange = e => { selYear = e.target.value; /
     moSel.options[i].selected = (moSel.options[i].value === _curMonth);
   }
 })();
-update(); };
-document.getElementById('selMonth').onchange = e => { selMonth = e.target.value; update(); };
-document.getElementById('selProp').onchange = e => { selProp = e.target.value; update(); };
 
 document.getElementById('lastUpdate').textContent = 'Updated: ' + new Date().toLocaleDateString('ko-KR');
 
